@@ -132,6 +132,11 @@ if ($data->patient->hasDrugAllergy()) {
                class="accept-patient-link">Re-Shortlist
             </a>
           </span>
+
+          <a href="javascript:void(0)"
+             onclick="removePatientFromTrial(<?php echo $data->id; ?>, <?php echo $data->patient_id; ?>, <?php echo $data->trial_id; ?>)">
+            Remove
+          </a>
           <?php endif; ?>
 
         <img class="loader" id="action-loader-<?php echo $data->id; ?>"

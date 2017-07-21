@@ -197,7 +197,7 @@ Yii::app()->getClientScript()->registerScriptFile($assetPath . '/js/toggle-secti
           content: "Sorry, an internal error occurred and we were unable to change the patient status.\n\nPlease contact support for assistance."
         }).open();
       },
-      result: function(response) {
+      result: function (response) {
         $('#action-loader-' + trial_patient_id).hide();
       }
     });
@@ -301,4 +301,26 @@ Yii::app()->getClientScript()->registerScriptFile($assetPath . '/js/toggle-secti
       }
     );
   });
+
+  function removePatientFromTrial(trial_patient_id, patient_id, trial_id) {
+
+    $('#action-loader-' + trial_patient_id).show();
+
+    $.ajax({
+      url: '<?php echo Yii::app()->createUrl('/OETrial/trial/removePatient'); ?>',
+      data: {id: trial_id, patient_id: patient_id},
+      type: 'GET',
+      result: function (response) {
+        $('#action-loader-' + trial_patient_id).hide();
+      },
+      success: function (response) {
+        window.location.reload(false);
+      },
+      error: function (response) {
+        new OpenEyes.UI.Dialog.Alert({
+          content: "Sorry, an internal error occurred and we were unable to remove the patient from the trial.\n\nPlease contact support for assistance."
+        }).open();
+      }
+    });
+  }
 </script>
