@@ -103,12 +103,13 @@ if ($isInAnotherInterventionTrial) {
   <td> <!-- Accept/Reject/Shortlist actions -->
       <?php if ($canEditPatient && ($data->trial->status == Trial::STATUS_OPEN || $data->trial->status == Trial::STATUS_IN_PROGRESS)): ?>
 
-          <?php if ($data->patient_status == TrialPatient::STATUS_SHORTLISTED && !$isInAnotherInterventionTrial): ?>
+          <?php if ($data->patient_status == TrialPatient::STATUS_SHORTLISTED): ?>
+
           <a href="javascript:void(0)"
              onclick="changePatientStatus(this, <?php echo $data->id; ?>, <?php echo TrialPatient::STATUS_ACCEPTED; ?>)"
-             class="accept-patient-link">Accept
+             class="accept-patient-link"
+             <?php if ($isInAnotherInterventionTrial): ?>style="color: #ad1515;"<?php endif; ?> >Accept
           </a>
-          <br/>
           <?php endif; ?>
 
           <?php if ($data->patient_status == TrialPatient::STATUS_SHORTLISTED || $data->patient_status == TrialPatient::STATUS_ACCEPTED): ?>
@@ -119,10 +120,12 @@ if ($isInAnotherInterventionTrial) {
           <?php endif; ?>
 
           <?php if ($data->patient_status == TrialPatient::STATUS_REJECTED): ?>
-          <a href="javascript:void(0)"
-             onclick="changePatientStatus(this, <?php echo $data->id; ?>, <?php echo TrialPatient::STATUS_SHORTLISTED; ?>)"
-             class="accept-patient-link">Re-Shortlist
-          </a>
+          <span style="white-space: nowrap;">
+            <a href="javascript:void(0)"
+               onclick="changePatientStatus(this, <?php echo $data->id; ?>, <?php echo TrialPatient::STATUS_SHORTLISTED; ?>)"
+               class="accept-patient-link">Re-Shortlist
+            </a>
+          </span>
           <?php endif; ?>
 
       <?php endif; ?>
