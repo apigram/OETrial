@@ -7,6 +7,7 @@ class PreviousTrialParameter extends CaseSearchParameter implements DBProviderIn
 {
     public $trial;
     public $type;
+    public $status;
 
     /**
      * CaseSearchParameter constructor. This overrides the parent constructor so that the name can be immediately set.
@@ -33,6 +34,7 @@ class PreviousTrialParameter extends CaseSearchParameter implements DBProviderIn
         return array_merge(parent::attributeNames(), array(
                 'trial',
                 'type',
+                'status',
             )
         );
     }
@@ -44,7 +46,7 @@ class PreviousTrialParameter extends CaseSearchParameter implements DBProviderIn
     public function rules()
     {
         return array_merge(parent::rules(), array(
-                array('type, trial', 'safe'),
+                array('type, trial, status', 'safe'),
             )
         );
     }
@@ -52,33 +54,41 @@ class PreviousTrialParameter extends CaseSearchParameter implements DBProviderIn
     public function renderParameter($id)
     {
         $ops = array(
-            '=' => 'Has been in',
-            '!=' => 'Has never been in',
+            '=' => 'Has been',
+            '!=' => 'Has never been',
         );
 
         $types = Trial::getTrialTypeOptions();
 
         $trials = Trial::getTrialList($this->type);
 
+        $statusList = array(
+            TrialPatient::STATUS_SHORTLISTED => 'Shortlisted in',
+            TrialPatient::STATUS_ACCEPTED => 'Accepted in',
+            TrialPatient::STATUS_REJECTED => 'Rejected from',
+        );
+
         ?>
 
       <div class="large-2 column">
           <?php echo CHtml::label($this->getLabel(), false); ?>
       </div>
-      <div class="large-3 column">
+      <div class="large-2 column">
           <?php echo CHtml::activeDropDownList($this, "[$id]operation", $ops, array('prompt' => 'Select One...')); ?>
           <?php echo CHtml::error($this, "[$id]operation"); ?>
       </div>
-
+      <div class="large-2 column">
+          <?php echo CHtml::activeDropDownList($this, "[$id]status", $statusList,
+              array('empty' => 'Included in')); ?>
+      </div>
       <div class="large-2 column trial-type">
           <?php echo CHtml::activeDropDownList($this, "[$id]type", $types,
               array('empty' => 'Any Trial', 'onchange' => 'getTrialList(this)')); ?>
       </div>
-      <div class="large-3 column trial-list">
+      <div class="large-2 column trial-list">
           <?php echo CHtml::activeDropDownList($this, "[$id]trial", $trials,
               array('empty' => 'Any', 'style' => 'display: none;')); ?>
         <p></p>
-        <!--These empty p tags ensure that the Remove link is always aligned correctly on the right; even when the select is hidden.-->
       </div>
 
       <script type="text/javascript">
@@ -125,47 +135,59 @@ class PreviousTrialParameter extends CaseSearchParameter implements DBProviderIn
      */
     public function query($searchProvider)
     {
-        // Construct your SQL query here.
-        if ($searchProvider->providerID === 'mysql') {
-            switch ($this->operation) {
-                case '=':
-                    $joinCondition = 'JOIN';
-                    if ($this->type !== '' && $this->type !== null) {
-                        if ($this->trial === '') {
-                            // Any intervention/non-intervention trial
-                            $condition = "t.trial_type = :p_t_type_$this->id";
-                        } else {
-                            // specific trial
-                            $condition = "t_p.trial_id = :p_t_trial_$this->id";
-                        }
-
+        switch ($this->operation) {
+            case '=':
+                $joinCondition = 'JOIN';
+                if ($this->type !== '' && $this->type !== null) {
+                    if ($this->trial === '') {
+                        // Any intervention/non-intervention trial
+                        $condition = "t.trial_type = :p_t_type_$this->id";
                     } else {
-                        // Any trial
-                        $condition = 't_p.trial_id IS NOT NULL';
+                        // specific trial
+                        $condition = "t_p.trial_id = :p_t_trial_$this->id";
                     }
-                    break;
-                case '!=':
-                    $joinCondition = 'LEFT JOIN';
-                    if ($this->type !== '' && $this->type !== null) {
-                        $condition = 't_p.trial_id IS NULL OR ';
-                        if ($this->trial === '') {
-                            // Not in any intervention/non-intervention trial
-                            $condition .= "t.trial_type != :p_t_type_$this->id";
-                        } else {
-                            // Not in a specific trial
-                            $condition .= "t_p.trial_id != :p_t_trial_$this->id";
-                        }
-                    } else {
-                        // not in any trial
-                        $condition = 't_p.trial_id IS NULL';
-                    }
-                    break;
-                default:
-                    throw new CHttpException(400, 'Invalid operator specified.');
-                    break;
-            }
 
-            return "
+                } else {
+                    // Any trial
+                    $condition = 't_p.trial_id IS NOT NULL';
+                }
+
+                if ($this->status !== '' && $this->status !== null) {
+                    $condition .= " AND t_p.patient_status = :p_t_status_$this->id";
+                } else {
+                    // not in any trial
+                    $condition .= ' AND t_p.patient_status IS NOT NULL';
+                }
+                break;
+            case '!=':
+                $joinCondition = 'LEFT JOIN';
+                if ($this->type !== '' && $this->type !== null) {
+                    $condition = 't_p.trial_id IS NULL OR ';
+                    if ($this->trial === '') {
+                        // Not in any intervention/non-intervention trial
+                        $condition .= "t.trial_type != :p_t_type_$this->id";
+                    } else {
+                        // Not in a specific trial
+                        $condition .= "t_p.trial_id != :p_t_trial_$this->id";
+                    }
+                } else {
+                    // not in any trial
+                    $condition = 't_p.trial_id IS NULL';
+                }
+
+                if ($this->status !== '' && $this->status !== null) {
+                    $condition .= " AND t_p.patient_status IS NULL OR t_p.patient_status != :p_t_status_$this->id";
+                } else {
+                    // not in any trial
+                    $condition .= ' AND t_p.patient_status IS NULL';
+                }
+                break;
+            default:
+                throw new CHttpException(400, 'Invalid operator specified.');
+                break;
+        }
+
+        return "
 SELECT p.id 
 FROM patient p 
 $joinCondition trial_patient t_p 
@@ -173,9 +195,6 @@ $joinCondition trial_patient t_p
 $joinCondition trial t
   ON t.id = t_p.trial_id
 WHERE $condition";
-        } else {
-            return null; // Not yet implemented.
-        }
     }
 
     /**
@@ -191,6 +210,10 @@ WHERE $condition";
             $binds[":p_t_trial_$this->id"] = $this->trial;
         } elseif ($this->type !== '' and $this->type !== null) {
             $binds[":p_t_type_$this->id"] = $this->type;
+        }
+
+        if ($this->status !== '' and $this->status !== null) {
+            $binds[":p_t_status_$this->id"] = $this->status;
         }
 
         return $binds;

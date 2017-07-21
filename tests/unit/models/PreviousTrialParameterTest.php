@@ -21,15 +21,12 @@ class PreviousTrialParameterTest extends CDbTestCase
     {
         $this->object = new PreviousTrialParameter();
         $this->searchProvider = new DBProvider('mysql');
-        $this->invalidProvider = new DBProvider('invalid');
         $this->object->id = 0;
     }
 
     protected function tearDown()
     {
-        unset($this->object); // start from scratch for each test.
-        unset($this->searchProvider);
-        unset($this->invalidProvider);
+        unset($this->object, $this->searchProvider); // start from scratch for each test.
     }
 
     /**
@@ -53,7 +50,14 @@ class PreviousTrialParameterTest extends CDbTestCase
 
         $trials = array(
             1,
-            ''
+            '',
+        );
+
+        $statusList = array(
+            '',
+            TrialPatient::STATUS_SHORTLISTED,
+            TrialPatient::STATUS_ACCEPTED,
+            TrialPatient::STATUS_REJECTED,
         );
 
         // Ensure the query is correct for each operator and returns a set of results.
@@ -63,37 +67,52 @@ class PreviousTrialParameterTest extends CDbTestCase
                 $this->object->type = $type;
                 foreach ($trials as $trial) {
                     $this->object->trial = $trial;
-                    if ($operator === '=') {
-                        $joinCondition = 'JOIN';
-                        if ($this->object->type !== '' and isset($this->object->type)) {
-                            if ($this->object->trial === '') {
-                                // Any intervention/non-intervention trial
-                                $condition = "t.trial_type = :p_t_type_0";
+                    foreach ($statusList as $status) {
+                        $this->object->status = $status;
+                        if ($operator === '=') {
+                            $joinCondition = 'JOIN';
+                            if ($this->object->type !== '' && isset($this->object->type)) {
+                                if ($this->object->trial === '') {
+                                    // Any intervention/non-intervention trial
+                                    $condition = 't.trial_type = :p_t_type_0';
+                                } else {
+                                    // specific trial
+                                    $condition = 't_p.trial_id = :p_t_trial_0';
+                                }
+
                             } else {
-                                // specific trial
-                                $condition = "t_p.trial_id = :p_t_trial_0";
+                                // Any trial
+                                $condition = 't_p.trial_id IS NOT NULL';
+                            }
+                            if ($this->object->status !== '') {
+                                $condition .= ' AND t_p.patient_status = :p_t_status_0';
+                            } else {
+                                // not in any trial
+                                $condition .= ' AND t_p.patient_status IS NOT NULL';
+                            }
+                        } elseif ($operator === '!=') {
+                            $joinCondition = 'LEFT JOIN';
+                            if ($this->object->type !== '' && isset($this->object->type)) {
+                                if ($this->object->trial === '') {
+                                    // Not in any intervention/non-intervention trial
+                                    $condition = 't_p.trial_id IS NULL OR t.trial_type != :p_t_type_0';
+                                } else {
+                                    // Not in a specific trial
+                                    $condition = 't_p.trial_id IS NULL OR t_p.trial_id != :p_t_trial_0';
+                                }
+                            } else {
+                                // not in any trial
+                                $condition = 't_p.trial_id IS NULL';
                             }
 
-                        } else {
-                            // Any trial
-                            $condition = "t_p.trial_id IS NOT NULL";
-                        }
-                    } elseif ($operator === '!=') {
-                        $joinCondition = 'LEFT JOIN';
-                        if ($this->object->type !== '' and isset($this->object->type)) {
-                            if ($this->object->trial === '') {
-                                // Not in any intervention/non-intervention trial
-                                $condition = "t_p.trial_id IS NULL OR t.trial_type != :p_t_type_0";
+                            if ($this->object->status !== '') {
+                                $condition .= ' AND t_p.patient_status IS NULL OR t_p.patient_status != :p_t_status_0';
                             } else {
-                                // Not in a specific trial
-                                $condition = "t_p.trial_id IS NULL OR t_p.trial_id != :p_t_trial_0";
+                                // not in any trial
+                                $condition .= ' AND t_p.patient_status IS NULL';
                             }
-                        } else {
-                            // not in any trial
-                            $condition = "t_p.trial_id IS NULL";
                         }
-                    }
-                    $sqlValue = "
+                        $sqlValue = "
 SELECT p.id 
 FROM patient p 
 $joinCondition trial_patient t_p 
@@ -101,12 +120,11 @@ $joinCondition trial_patient t_p
 $joinCondition trial t
   ON t.id = t_p.trial_id
 WHERE $condition";
-                    $this->assertEquals($sqlValue, $this->object->query($this->searchProvider));
+                        $this->assertEquals($sqlValue, $this->object->query($this->searchProvider));
+                    }
                 }
             }
         }
-
-        $this->assertNull($this->object->query($this->invalidProvider));
 
         // Ensure that a HTTP exception is raised if an invalid operation is specified.
         $this->setExpectedException(CHttpException::class);
@@ -138,14 +156,22 @@ WHERE $condition";
 
         $this->assertEquals($expected, $this->object->bindValues());
 
-        $this->object->trial = 1;
-
-        // Both binds should never be returned. Only one should be returned.
+        // Both trial-specific binds (type and trial) should never be returned. Only one should be returned.
         $incorrect = array(
             ':p_t_type_0' => $this->object->type,
-            ':p_t_trial_0' => $this->object->trial
+            ':p_t_trial_0' => $this->object->trial,
         );
 
         $this->assertNotEquals($incorrect, $this->object->bindValues());
+
+        $this->object->trial = 1;
+        $this->object->status = TrialPatient::STATUS_SHORTLISTED;
+
+        $expected = array(
+            ':p_t_trial_0' => $this->object->trial,
+            ':p_t_status_0' => TrialPatient::STATUS_SHORTLISTED,
+        );
+
+        $this->assertEquals($expected, $this->object->bindValues());
     }
 }
