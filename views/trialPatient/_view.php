@@ -9,7 +9,11 @@ $canEditPatient = Trial::checkTrialAccess(Yii::app()->user, $data->trial_id, Use
 $warnings = array();
 
 if ($isInAnotherInterventionTrial) {
-    $warnings = array_merge($warnings, array('This patient is already in an Intervention trial'));
+    $warnings = array_merge($warnings, array('<li>This patient is already in an Intervention trial</li>'));
+}
+
+if ($data->patient->hasDrugAllergy()) {
+    $warnings = array_merge($warnings, array('<li>This patient has allergies</li>'));
 }
 
 ?>
@@ -19,7 +23,9 @@ if ($isInAnotherInterventionTrial) {
         <span class="warning">
           <span class="icon icon-alert icon-alert-warning"></span>
           <span class="quicklook warning">
-              <?php echo implode($warnings, ', '); ?>
+            <ul>
+              <?php echo implode($warnings); ?>
+            </ul>
           </span>
         </span>
       <?php endif; ?>
