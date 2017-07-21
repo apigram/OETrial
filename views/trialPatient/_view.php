@@ -7,13 +7,12 @@ $isInAnotherInterventionTrial = $data->patient->isCurrentlyInInterventionTrial($
 $canEditPatient = Trial::checkTrialAccess(Yii::app()->user, $data->trial_id, UserTrialPermission::PERMISSION_EDIT);
 
 $warnings = array();
-
-if ($isInAnotherInterventionTrial) {
-    $warnings = array_merge($warnings, array('<li>This patient is already in an Intervention trial</li>'));
+foreach ($data->patient->getWarnings(true) as $warn) {
+    $warnings[] = "{$warn['long_msg']}: {$warn['details']}";
 }
 
-if ($data->patient->hasDrugAllergy()) {
-    $warnings = array_merge($warnings, array('<li>This patient has allergies</li>'));
+if ($isInAnotherInterventionTrial) {
+    $warnings[] = 'This patient is already in an Intervention trial';
 }
 
 ?>
@@ -24,7 +23,9 @@ if ($data->patient->hasDrugAllergy()) {
           <span class="icon icon-alert icon-alert-warning"></span>
           <span class="quicklook warning">
             <ul>
-              <?php echo implode($warnings); ?>
+              <li>
+                <?php echo implode('</li><li>', $warnings) ?>
+              </li>
             </ul>
           </span>
         </span>
