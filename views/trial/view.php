@@ -174,6 +174,9 @@ Yii::app()->getClientScript()->registerScriptFile($assetPath . '/js/toggle-secti
 <script type="application/javascript">
 
   function changePatientStatus(object, trial_patient_id, new_status) {
+
+    $('#action-loader-' + trial_patient_id).show();
+
     $.ajax({
       url: '<?php echo Yii::app()->controller->createUrl('/OETrial/trialPatient/changeStatus'); ?>/',
       data: {id: trial_patient_id, new_status: new_status},
@@ -193,6 +196,9 @@ Yii::app()->getClientScript()->registerScriptFile($assetPath . '/js/toggle-secti
         new OpenEyes.UI.Dialog.Alert({
           content: "Sorry, an internal error occurred and we were unable to change the patient status.\n\nPlease contact support for assistance."
         }).open();
+      },
+      result: function(response) {
+        $('#action-loader-' + trial_patient_id).hide();
       }
     });
   }

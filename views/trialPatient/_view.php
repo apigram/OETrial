@@ -128,6 +128,9 @@ if ($isInAnotherInterventionTrial) {
           </span>
           <?php endif; ?>
 
+        <img class="loader" id="action-loader-<?php echo $data->id; ?>"
+             src="<?php echo Yii::app()->assetManager->createUrl('img/ajax-loader.gif') ?>"
+             alt="loading..." style="display: none;"/>
       <?php endif; ?>
   </td>
 </tr>
