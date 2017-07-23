@@ -23,10 +23,14 @@ class m170704_235811_add_trial_roles extends OEMigration
 
     public function safeDown()
     {
+        $this->delete('authassignment', 'itemname = "' . self::CREATE_TRIALS_ROLE . '"');
+
         $this->delete('authitemchild',
             'parent = "' . self::CREATE_TRIALS_ROLE . '" AND child = "' . self::CREATE_TRIALS_TASK . '"');
         $this->delete('authitem', 'name = "' . self::CREATE_TRIALS_TASK . '"');
         $this->delete('authitem', 'name = "' . self::CREATE_TRIALS_ROLE . '"');
+
+        $this->delete('authassignment', 'itemname = "' . self::VIEW_TRIALS_ROLE . '"');
 
         $this->delete('authitemchild',
             'parent = "' . self::VIEW_TRIALS_ROLE . '" AND child = "' . self::VIEW_TRIALS_TASK . '"');

@@ -8,10 +8,13 @@ class m170521_234542_create_trial_table extends OEMigration
     {
         $this->createOETable('trial', array(
             'id' => 'pk',
+            'trial_type' => 'integer unsigned not null default 0',
             'name' => 'varchar(64) collate utf8_bin NOT NULL',
-            'description' => 'varchar(64) collate utf8_bin',
+            'description' => 'text',
             'owner_user_id' => 'int(10) unsigned NOT NULL',
             'status' => 'int(10) unsigned NOT NULL',
+            'closed_date' => 'datetime',
+            'external_reference' =>'varchar(100) collate utf8_bin',
         ), self::VERSIONED
         );
 
