@@ -13,6 +13,7 @@ class m170521_234542_create_trial_table extends OEMigration
             'description' => 'text',
             'owner_user_id' => 'int(10) unsigned NOT NULL',
             'status' => 'int(10) unsigned NOT NULL',
+            'started_date' => 'datetime',
             'closed_date' => 'datetime',
             'external_reference' =>'varchar(100) collate utf8_bin',
         ), self::VERSIONED

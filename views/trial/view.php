@@ -45,7 +45,10 @@ $hasManagePermissions = Trial::checkTrialAccess(Yii::app()->user, $model->id, Us
           </h3>
         </div>
         <div class="large-3 column">
-            <?php echo $model->getCreatedDateForDisplay(); ?> &mdash; <?php echo $model->getClosedDateForDisplay() ?>
+            <?php echo $model->getStartedDateForDisplay(); ?>
+            <?php if ($model->started_date !== null): ?>
+              &mdash; <?php echo $model->getClosedDateForDisplay() ?>
+            <?php endif; ?>
         </div>
       </div>
 

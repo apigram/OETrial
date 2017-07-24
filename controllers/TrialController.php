@@ -214,22 +214,25 @@ class TrialController extends BaseModuleController
                 $sortBy = 'LOWER(t.name)';
                 break;
             case 1:
-                $sortBy = 't.created_date';
+                $sortBy = 't.started_date';
                 break;
             case 2:
-                $sortBy = "LOWER(u.first_name) $sortDir, LOWER(u.last_name)";
+                $sortBy = 't.closed_date';
                 break;
             case 3:
+                $sortBy = "LOWER(u.first_name) $sortDir, LOWER(u.last_name)";
+                break;
+            case 4:
                 $sortBy = 't.status';
                 break;
             default:
-                $sortBy = 't.status';
+                $sortBy = 'LOWER(t.name)';
                 break;
         }
 
         $condition = "trial_type = :trialType AND EXISTS (
                         SELECT * FROM user_trial_permission utp WHERE utp.user_id = :userId AND utp.trial_id = t.id
-                    ) ORDER BY $sortBy $sortDir";
+                    ) ORDER BY $sortBy $sortDir, LOWER(t.name) ASC";
 
         $interventionTrialDataProvider = new CActiveDataProvider('Trial', array(
             'criteria' => array(
@@ -454,9 +457,13 @@ class TrialController extends BaseModuleController
         }
 
         if ($new_state == Trial::STATUS_CLOSED || $new_state == Trial::STATUS_CANCELLED) {
-            $model->closed_date = date('Y-m-d 00:00:00');
+            $model->closed_date = date('Y-m-d H:i:s');
         } else {
             $model->closed_date = null;
+        }
+
+        if ($model->status == Trial::STATUS_OPEN && $new_state == Trial::STATUS_IN_PROGRESS) {
+            $model->started_date = date('Y-m-d H:i:s');
         }
 
         $model->status = $new_state;

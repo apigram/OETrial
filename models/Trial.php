@@ -10,6 +10,7 @@
  * @property integer $owner_user_id
  * @property integer $status
  * @property integer $trial_type
+ * @property string $started_date
  * @property string $closed_date
  * @property string $last_modified_date
  * @property string $last_modified_user_id
@@ -171,13 +172,13 @@ class Trial extends BaseActiveRecordVersioned
     }
 
     /**
-     * Returns the date this trial was created as a string
+     * Returns the date this trial was started as a string
      *
-     * @return string The created date
+     * @return string The started date as a string
      */
-    public function getCreatedDateForDisplay()
+    public function getStartedDateForDisplay()
     {
-        return Helper::formatFuzzyDate($this->created_date);
+        return $this->started_date !== null ? Helper::formatFuzzyDate($this->started_date) : 'Pending';
     }
 
     /**
@@ -187,7 +188,13 @@ class Trial extends BaseActiveRecordVersioned
      */
     public function getClosedDateForDisplay()
     {
-        return $this->closed_date ? Helper::formatFuzzyDate($this->closed_date) : 'present';
+        if ($this->started_date === null) {
+            return null;
+        } elseif ($this->closed_date !== null) {
+            return Helper::formatFuzzyDate($this->closed_date);
+        } else {
+            return 'present';
+        }
     }
 
 
@@ -389,11 +396,12 @@ class Trial extends BaseActiveRecordVersioned
      */
     public static function getTrialList($type)
     {
-        if ($type === null || $type === ''){
+        if ($type === null || $type === '') {
             return array();
         }
 
         $trialModels = Trial::model()->findAll('trial_type=:type', array(':type' => $type));
+
         return CHtml::listData($trialModels, 'id', 'name');
     }
 }
