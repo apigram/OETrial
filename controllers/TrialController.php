@@ -450,7 +450,7 @@ class TrialController extends BaseModuleController
         /* @var Trial $model */
         $model = Trial::model()->findByPk($id);
 
-        if ($new_state == Trial::STATUS_OPEN && $model->hasShortlistedPatients()) {
+        if ($model->status == Trial::STATUS_OPEN && $new_state == Trial::STATUS_IN_PROGRESS && $model->hasShortlistedPatients()) {
             echo self::RETURN_CODE_CANT_OPEN_SHORTLISTED_TRIAL;
 
             return;
