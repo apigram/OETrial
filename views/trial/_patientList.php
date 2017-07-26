@@ -1,6 +1,6 @@
 <?php
 /* @var TrialController $this */
-/* @var integer $trial_id */
+/* @var Trial $trial */
 /* @var CActiveDataProvider $dataProvider */
 /* @var string $listId */
 /* @var string $title */
@@ -40,10 +40,14 @@ if ($dataProvider->totalItemCount == 0): ?>
             'Age',
             'Ethnicity',
             'External Reference',
-            'Treatment Type',
-            'Diagnoses/Medication',
-            'Actions',
         );
+
+        if ($trial->trial_type == Trial::TRIAL_TYPE_INTERVENTION) {
+            $columns[] = 'Treatment Type';
+        }
+
+        $columns[] = 'Diagnoses/Medication';
+        $columns[] = 'Actions';
 
         $sortableColumns = array('Name', 'Gender', 'Age', 'Ethnicity', 'External Reference', 'Treatment Type');
 
@@ -62,7 +66,7 @@ if ($dataProvider->totalItemCount == 0): ?>
                       $field . $sort_symbol,
                       $this->createUrl('view',
                           array(
-                              'id' => $trial_id,
+                              'id' => $trial->id,
                               'sort_by' => $i,
                               'sort_dir' => $new_sort_dir,
                               'page_num' => $page_num,

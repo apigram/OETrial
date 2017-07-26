@@ -68,31 +68,34 @@ if ($isInAnotherInterventionTrial) {
              alt="loading..." style="display: none;"/>
       <?php endif; ?>
   </td>
-  <td> <!-- Treatment Type -->
-      <?php if ($data->trial->status == Trial::STATUS_CLOSED): ?>
+    <?php if ($data->trial->trial_type == Trial::TRIAL_TYPE_INTERVENTION): ?>
+      <td> <!-- Treatment Type -->
+          <?php if ($data->trial->status == Trial::STATUS_CLOSED): ?>
 
-          <?php if ($canEditPatient): ?>
-              <?php echo CHtml::dropDownList(
-                  'treatment-type',
-                  $data->treatment_type,
-                  TrialPatient::getTreatmentTypeOptions(),
-                  array(
-                      'id' => "treatment-type-$data->id",
-                      'data-trial-patient-id' => $data->id,
-                      'onchange' => 'updateTreatmentType(this)',
-                  )
-              ); ?>
-          <img id="treatment-type-loader-<?php echo $data->id; ?>"
-               src="<?php echo Yii::app()->assetManager->createUrl('img/ajax-loader.gif') ?>" alt="Working..."
-               class="hidden"/>
-          <img id="treatment-type-success-<?php echo $data->id; ?>"
-               src="<?php echo Yii::app()->assetManager->createUrl('img/_elements/icons/event-optional/element-added.png'); ?>"
-               alt="Success" class="hidden"/>
-          <?php else: /* can't edit */ ?>
-              <?php echo $data->getTreatmentTypeForDisplay(); ?>
+              <?php if ($canEditPatient): ?>
+                  <?php echo CHtml::dropDownList(
+                      'treatment-type',
+                      $data->treatment_type,
+                      TrialPatient::getTreatmentTypeOptions(),
+                      array(
+                          'id' => "treatment-type-$data->id",
+                          'data-trial-patient-id' => $data->id,
+                          'onchange' => 'updateTreatmentType(this)',
+                      )
+                  ); ?>
+              <img id="treatment-type-loader-<?php echo $data->id; ?>"
+                   src="<?php echo Yii::app()->assetManager->createUrl('img/ajax-loader.gif') ?>" alt="Working..."
+                   class="hidden"/>
+              <img id="treatment-type-success-<?php echo $data->id; ?>"
+                   src="<?php echo Yii::app()->assetManager->createUrl('img/_elements/icons/event-optional/element-added.png'); ?>"
+                   alt="Success" class="hidden"/>
+              <?php else: /* can't edit */ ?>
+                  <?php echo $data->getTreatmentTypeForDisplay(); ?>
+              <?php endif; ?>
           <?php endif; ?>
-      <?php endif; ?>
-  </td>
+      </td>
+    <?php endif; ?>
+
   <td> <!-- Diagnoses and Medication show/hide actions -->
       <?php if (count($data->patient->secondarydiagnoses) > 0): ?>
         <a href="javascript:void(0)"

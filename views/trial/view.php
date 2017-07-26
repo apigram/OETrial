@@ -103,7 +103,7 @@ $hasManagePermissions = Trial::checkTrialAccess(Yii::app()->user, $model->id, Us
       <hr/>
 
         <?php $this->renderPartial('_patientList', array(
-            'trial_id' => $model->id,
+            'trial' => $model,
             'listId' => 'shortlistedPatientList',
             'title' => 'Shortlisted Patients',
             'dataProvider' => $dataProviders[TrialPatient::STATUS_SHORTLISTED],
@@ -112,7 +112,7 @@ $hasManagePermissions = Trial::checkTrialAccess(Yii::app()->user, $model->id, Us
         )); ?>
 
         <?php $this->renderPartial('_patientList', array(
-            'trial_id' => $model->id,
+            'trial' => $model,
             'listId' => 'acceptedPatientList',
             'title' => 'Accepted Patients',
             'dataProvider' => $dataProviders[TrialPatient::STATUS_ACCEPTED],
@@ -121,7 +121,7 @@ $hasManagePermissions = Trial::checkTrialAccess(Yii::app()->user, $model->id, Us
         )); ?>
 
         <?php $this->renderPartial('_patientList', array(
-            'trial_id' => $model->id,
+            'trial' => $model,
             'listId' => 'rejectedPatientList',
             'title' => 'Rejected Patients',
             'dataProvider' => $dataProviders[TrialPatient::STATUS_REJECTED],
