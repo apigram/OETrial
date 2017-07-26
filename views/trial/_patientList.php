@@ -15,7 +15,6 @@ if ($dataProvider->totalItemCount == 0): ?>
   </h2>
   <p>
     There are no <?php echo $title; ?> to display.
-    one.
   </p>
 <?php else: ?>
     <?php
