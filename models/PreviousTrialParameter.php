@@ -8,6 +8,7 @@ class PreviousTrialParameter extends CaseSearchParameter implements DBProviderIn
     public $trial;
     public $type;
     public $status;
+    public $treatmentType;
 
     /**
      * CaseSearchParameter constructor. This overrides the parent constructor so that the name can be immediately set.
@@ -35,6 +36,7 @@ class PreviousTrialParameter extends CaseSearchParameter implements DBProviderIn
                 'trial',
                 'type',
                 'status',
+                'treatmentType',
             )
         );
     }
@@ -46,7 +48,7 @@ class PreviousTrialParameter extends CaseSearchParameter implements DBProviderIn
     public function rules()
     {
         return array_merge(parent::rules(), array(
-                array('type, trial, status', 'safe'),
+                array('type, trial, status, treatmentType', 'safe'),
             )
         );
     }
@@ -68,47 +70,76 @@ class PreviousTrialParameter extends CaseSearchParameter implements DBProviderIn
             TrialPatient::STATUS_REJECTED => 'Rejected from',
         );
 
+        $treatmentTypeList = TrialPatient::getTreatmentTypeOptions();
+
         ?>
 
-      <div class="large-2 column">
-          <?php echo CHtml::label($this->getLabel(), false); ?>
+      <div class="large-10 column">
+        <div class="box">
+          <div class="row">
+            <div class="large-2 column">
+                <?php echo CHtml::label($this->getLabel(), false); ?>
+            </div>
+            <div class="large-2 column">
+                <?php echo CHtml::activeDropDownList($this, "[$id]operation", $ops,
+                    array('prompt' => 'Select One...')); ?>
+                <?php echo CHtml::error($this, "[$id]operation"); ?>
+            </div>
+            <div class="large-2 column">
+                <?php echo CHtml::activeDropDownList($this, "[$id]status", $statusList,
+                    array('empty' => 'Included in')); ?>
+            </div>
+            <div class="large-2 column trial-type">
+                <?php echo CHtml::activeDropDownList($this, "[$id]type", $types,
+                    array('empty' => 'Any Trial', 'onchange' => "getTrialList(this, $this->id)")); ?>
+            </div>
+            <div class="large-2 column trial-list end">
+                <?php echo CHtml::activeDropDownList($this, "[$id]trial", $trials,
+                    array('empty' => 'Any', 'style' => 'display: none;')); ?>
+            </div>
+          </div>
+          <br/>
+          <div class="row treatment-type-container"
+               <?php if ($this->type !== '' && $this->type !== null && $this->type == Trial::TRIAL_TYPE_NON_INTERVENTION): ?>style="display:none" <?php endif; ?>>
+            <div class="large-2 column">&nbsp;</div>
+            <div class="large-2 column">
+              <p style="float: right; margin: 5px">and was given</p>
+            </div>
+            <div class="large-2 column">
+                <?php echo CHtml::activeDropDownList($this, "[$id]treatmentType", $treatmentTypeList,
+                    array('empty' => 'Any')); ?>
+            </div>
+            <div class="large-2 column end">
+              <p style="margin: 5px">treatment</p>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="large-2 column">
-          <?php echo CHtml::activeDropDownList($this, "[$id]operation", $ops, array('prompt' => 'Select One...')); ?>
-          <?php echo CHtml::error($this, "[$id]operation"); ?>
-      </div>
-      <div class="large-2 column">
-          <?php echo CHtml::activeDropDownList($this, "[$id]status", $statusList,
-              array('empty' => 'Included in')); ?>
-      </div>
-      <div class="large-2 column trial-type">
-          <?php echo CHtml::activeDropDownList($this, "[$id]type", $types,
-              array('empty' => 'Any Trial', 'onchange' => 'getTrialList(this)')); ?>
-      </div>
-      <div class="large-2 column trial-list">
-          <?php echo CHtml::activeDropDownList($this, "[$id]trial", $trials,
-              array('empty' => 'Any', 'style' => 'display: none;')); ?>
-        <p></p>
-      </div>
+
 
       <script type="text/javascript">
-        function getTrialList(target) {
-          var type = parseInt($(target).val());
-          var id = $(target).parent().parent().parent().attr('id');
-          var list = $(target).parent().parent().find('.trial-list select');
+        function getTrialList(target, parameter_id) {
+          var parameterNode = $('.parameter#' + parameter_id);
 
-          if (isNaN(type)) {
-            list.empty();
-            list.hide();
+          var trialType = parseInt($(target).val());
+          var trialList = parameterNode.find('.trial-list select');
+          var treatmentTypeContainer = parameterNode.find('.treatment-type-container');
+
+          // Only show the treatment type if the trial type is set to "Any" or "Intervention"
+          treatmentTypeContainer.toggle(isNaN(trialType) || trialType === <?php echo Trial::TRIAL_TYPE_INTERVENTION; ?>);
+
+          if (isNaN(trialType)) {
+            trialList.empty();
+            trialList.hide();
           } else {
             $.ajax({
               url: '<?php echo Yii::app()->createUrl('/OETrial/trial/getTrialList'); ?>',
               type: 'GET',
-              data: {type: type},
+              data: {type: trialType},
               success: function (response) {
-                list.empty();
-                list.append(response);
-                list.show();
+                trialList.empty();
+                trialList.append(response);
+                trialList.show();
               }
             });
           }
@@ -158,6 +189,13 @@ class PreviousTrialParameter extends CaseSearchParameter implements DBProviderIn
                     // not in any trial
                     $condition .= ' AND t_p.patient_status IS NOT NULL';
                 }
+
+                if (($this->type === '' || $this->type === null || $this->type !== (int)Trial::TRIAL_TYPE_NON_INTERVENTION)
+                    && $this->treatmentType !== '' && $this->treatmentType !== null
+                ) {
+                    $condition .= " AND t_p.treatment_type = :p_t_treatment_type_$this->id";
+                }
+
                 break;
             case '!=':
                 $joinCondition = 'LEFT JOIN';
@@ -181,6 +219,13 @@ class PreviousTrialParameter extends CaseSearchParameter implements DBProviderIn
                     // not in any trial
                     $condition .= ' AND t_p.patient_status IS NULL';
                 }
+
+                if (($this->type === '' || $this->type === null || $this->type !== (int)Trial::TRIAL_TYPE_NON_INTERVENTION)
+                    && $this->treatmentType !== '' && $this->treatmentType !== null
+                ) {
+                    $condition .= " AND t_p.treatment_type IS NULL OR t_p.treatment_type != :p_t_treatment_type_$this->id";
+                }
+
                 break;
             default:
                 throw new CHttpException(400, 'Invalid operator specified.');
@@ -206,14 +251,20 @@ WHERE $condition";
         // Construct your list of bind values here. Use the format "bind" => "value".
         $binds = array();
 
-        if ($this->trial !== '' and $this->trial !== null) {
+        if ($this->trial !== '' && $this->trial !== null) {
             $binds[":p_t_trial_$this->id"] = $this->trial;
-        } elseif ($this->type !== '' and $this->type !== null) {
+        } elseif ($this->type !== '' && $this->type !== null) {
             $binds[":p_t_type_$this->id"] = $this->type;
         }
 
-        if ($this->status !== '' and $this->status !== null) {
+        if ($this->status !== '' && $this->status !== null) {
             $binds[":p_t_status_$this->id"] = $this->status;
+        }
+
+        if (($this->type === '' || $this->type === null || $this->type !== (int)Trial::TRIAL_TYPE_NON_INTERVENTION)
+            && $this->treatmentType !== '' && $this->treatmentType !== null
+        ) {
+            $binds[":p_t_treatment_type_$this->id"] = $this->treatmentType;
         }
 
         return $binds;
