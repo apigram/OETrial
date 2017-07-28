@@ -126,6 +126,10 @@ class TrialPatient extends BaseActiveRecordVersioned
      */
     public function getTreatmentTypeForDisplay()
     {
+        if($this->trial->trial_type == Trial::TRIAL_TYPE_NON_INTERVENTION) {
+            return 'N/A';
+        }
+
         if (array_key_exists($this->treatment_type, self::getTreatmentTypeOptions())) {
             return self::getTreatmentTypeOptions()[$this->treatment_type];
         }

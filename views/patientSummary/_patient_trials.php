@@ -22,7 +22,7 @@
       <tr>
         <th>Trial</th>
         <th>Principle Investigator</th>
-        <th>Control Status</th>
+        <th>Treatment</th>
         <th>Trial Status</th>
         <th>Trial Type</th>
         <th>Date Started</th>
