@@ -8,7 +8,6 @@
 
     <div class="box admin">
       <h1 class="text-center">Create Trial</h1>
-
         <?php $this->renderPartial('_form', array('model' => $model)); ?>
     </div>
   </div>

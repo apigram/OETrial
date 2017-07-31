@@ -51,14 +51,14 @@ if ($isInAnotherInterventionTrial) {
     <span id="ext-trial-id-<?php echo $data->id; ?>">
               <?php echo CHtml::encode($data->external_trial_identifier); ?>
             </span>
-      <?php if ($canEditPatient && $data->trial->status != Trial::STATUS_CANCELLED): ?>
+      <?php if ($canEditPatient && (int)$data->trial->status !== Trial::STATUS_CANCELLED): ?>
 
         <input id="ext-trial-id-form-<?php echo $data->id; ?>" type="text"
                value="<?php echo CHtml::encode($data->external_trial_identifier); ?>" width="50"
                style="display:none;"/>
       <?php endif; ?>
 
-      <?php if ($canEditPatient && $data->trial->status != Trial::STATUS_CANCELLED): ?>
+      <?php if ($canEditPatient && (int)$data->trial->status !== Trial::STATUS_CANCELLED): ?>
 
         <a id="ext-trial-id-edit-<?php echo $data->id; ?>" href="javascript:void(0)"
            onclick="editExternalTrialIdentifier(<?php echo $data->id; ?>)">edit</a>
@@ -68,9 +68,9 @@ if ($isInAnotherInterventionTrial) {
              alt="loading..." style="display: none;"/>
       <?php endif; ?>
   </td>
-    <?php if ($data->trial->trial_type == Trial::TRIAL_TYPE_INTERVENTION): ?>
+    <?php if ((int)$data->trial->trial_type === Trial::TRIAL_TYPE_INTERVENTION): ?>
       <td> <!-- Treatment Type -->
-          <?php if ($data->trial->status == Trial::STATUS_CLOSED): ?>
+          <?php if ((int)$data->trial->status === Trial::STATUS_CLOSED): ?>
 
               <?php if ($canEditPatient): ?>
                   <?php echo CHtml::dropDownList(
@@ -111,9 +111,9 @@ if ($isInAnotherInterventionTrial) {
       <?php endif; ?>
   </td>
   <td> <!-- Accept/Reject/Shortlist actions -->
-      <?php if ($canEditPatient && ($data->trial->status == Trial::STATUS_OPEN || $data->trial->status == Trial::STATUS_IN_PROGRESS)): ?>
+      <?php if ($canEditPatient && ((int)$data->trial->status === Trial::STATUS_OPEN || (int)$data->trial->status === Trial::STATUS_IN_PROGRESS)): ?>
 
-          <?php if ($data->patient_status == TrialPatient::STATUS_SHORTLISTED): ?>
+          <?php if ((int)$data->patient_status === TrialPatient::STATUS_SHORTLISTED): ?>
 
           <a href="javascript:void(0)"
              onclick="changePatientStatus(this, <?php echo $data->id; ?>, <?php echo TrialPatient::STATUS_ACCEPTED; ?>)"
@@ -122,14 +122,14 @@ if ($isInAnotherInterventionTrial) {
           </a>
           <?php endif; ?>
 
-          <?php if ($data->patient_status == TrialPatient::STATUS_SHORTLISTED || $data->patient_status == TrialPatient::STATUS_ACCEPTED): ?>
+          <?php if ((int)$data->patient_status === TrialPatient::STATUS_SHORTLISTED || (int)$data->patient_status === TrialPatient::STATUS_ACCEPTED): ?>
           <a href="javascript:void(0)"
              onclick="changePatientStatus(this, <?php echo $data->id; ?>, <?php echo TrialPatient::STATUS_REJECTED; ?>)"
              class="accept-patient-link">Reject
           </a>
           <?php endif; ?>
 
-          <?php if ($data->patient_status == TrialPatient::STATUS_REJECTED): ?>
+          <?php if ((int)$data->patient_status === TrialPatient::STATUS_REJECTED): ?>
           <span style="white-space: nowrap;">
             <a href="javascript:void(0)"
                onclick="changePatientStatus(this, <?php echo $data->id; ?>, <?php echo TrialPatient::STATUS_SHORTLISTED; ?>)"

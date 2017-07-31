@@ -8,18 +8,18 @@ class TrialController extends BaseModuleController
     /**
      * The return code for actionTransitionState() if the transition was a success
      */
-    const RETURN_CODE_OK = '0';
+    const RETURN_CODE_OK = 'success';
     /**
      * The return code for actionTransitionState() if the user tried to transition an open trial to in progress
      * while a patient is still shortlisted
      */
-    const RETURN_CODE_CANT_OPEN_SHORTLISTED_TRIAL = '1';
+    const RETURN_CODE_CANT_OPEN_SHORTLISTED_TRIAL = 'cant_open_with_shortlisted_patients';
 
     /**
      * The return code for actionAddPermission() if the user tried to share the trial with a user that it is
      * already shared with
      */
-    const RETURN_CODE_USER_PERMISSION_ALREADY_EXISTS = '2';
+    const RETURN_CODE_USER_PERMISSION_ALREADY_EXISTS = 'permission_already_exists';
 
 
     /**
@@ -42,7 +42,6 @@ class TrialController extends BaseModuleController
     {
         return array(
             'accessControl',
-            'ajaxOnly + getTrialList',
         );
     }
 
@@ -93,7 +92,7 @@ class TrialController extends BaseModuleController
 
     /**
      * Displays a particular model.
-     * @param integer $id the ID of the model to be displayed
+     * @param int $id the ID of the model to be displayed
      * @throws CException Thrown if an error occurs when loading the data providers
      */
     public function actionView($id)
@@ -130,15 +129,15 @@ class TrialController extends BaseModuleController
             'model' => $model,
             'report' => $report,
             'dataProviders' => $model->getPatientDataProviders($sortBy, $sortDir),
-            'sort_by' => (integer)Yii::app()->request->getParam('sort_by', null),
-            'sort_dir' => (integer)Yii::app()->request->getParam('sort_dir', null),
+            'sort_by' => (int)Yii::app()->request->getParam('sort_by', null),
+            'sort_dir' => (int)Yii::app()->request->getParam('sort_dir', null),
         ));
     }
 
     /**
      * Returns the data model based on the primary key given in the GET variable.
      * If the data model is not found, an HTTP exception will be raised.
-     * @param integer $id the ID of the model to be loaded
+     * @param int $id the ID of the model to be loaded
      * @return Trial the loaded model
      * @throws CHttpException
      */
@@ -153,7 +152,6 @@ class TrialController extends BaseModuleController
         return $model;
     }
 
-
     /**
      * Creates a new model.
      * If creation is successful, the browser will be redirected to the 'view' page.
@@ -162,6 +160,7 @@ class TrialController extends BaseModuleController
     {
         $model = new Trial;
         $model->status = Trial::STATUS_OPEN;
+        $model->trial_type = Trial::TRIAL_TYPE_NON_INTERVENTION;
         $model->owner_user_id = Yii::app()->user->id;
 
         if (isset($_POST['Trial'])) {
@@ -179,7 +178,7 @@ class TrialController extends BaseModuleController
     /**
      * Updates a particular model.
      * If update is successful, the browser will be redirected to the 'view' page.
-     * @param integer $id the ID of the model to be updated
+     * @param int $id the ID of the model to be updated
      * @throws CHttpException Thrown if the model cannot be loaded
      */
     public function actionUpdate($id)
@@ -259,17 +258,17 @@ class TrialController extends BaseModuleController
         $this->render('index', array(
             'interventionTrialDataProvider' => $interventionTrialDataProvider,
             'nonInterventionTrialDataProvider' => $nonInterventionTrialDataProvider,
-            'sort_by' => (integer)Yii::app()->request->getParam('sort_by', null),
-            'sort_dir' => (integer)Yii::app()->request->getParam('sort_dir', null),
+            'sort_by' => (int)Yii::app()->request->getParam('sort_by', null),
+            'sort_dir' => (int)Yii::app()->request->getParam('sort_dir', null),
         ));
     }
 
     /**
      * Adds a patient to the trial
      *
-     * @param integer $id The ID of the Trial to add to
-     * @param integer $patient_id THe ID of the patient to add
-     * @param integer $patient_status The initial trial status for the patient (default to shortlisted)
+     * @param int $id The ID of the Trial to add to
+     * @param int $patient_id THe ID of the patient to add
+     * @param int $patient_status The initial trial status for the patient (default to shortlisted)
      * @throws Exception Thrown if an error occurs when saving the TrialPatient record
      */
     public function actionAddPatient($id, $patient_id, $patient_status = TrialPatient::STATUS_SHORTLISTED)
@@ -281,6 +280,7 @@ class TrialController extends BaseModuleController
         $trialPatient->trial_id = $trial->id;
         $trialPatient->patient_id = $patient->id;
         $trialPatient->patient_status = $patient_status;
+        $trialPatient->treatment_type = TrialPatient::TREATMENT_TYPE_UNKNOWN;
 
         if (!$trialPatient->save()) {
             throw new CHttpException(400,
@@ -289,8 +289,8 @@ class TrialController extends BaseModuleController
     }
 
     /**
-     * @param integer $id The id of the trial to remove
-     * @param integer $patient_id The id of the patient to remove
+     * @param int $id The id of the trial to remove
+     * @param int $patient_id The id of the patient to remove
      * @throws CHttpException Raised when the record cannot be found
      * @throws Exception Raised when an error occurs when removing the record
      */
@@ -318,7 +318,7 @@ class TrialController extends BaseModuleController
     /**
      * Displays the permissions screen
      *
-     * @param integer $id The ID of the Trial
+     * @param int $id The ID of the Trial
      */
     public function actionPermissions($id)
     {
@@ -346,7 +346,10 @@ class TrialController extends BaseModuleController
     /**
      * Creates a new Trial Permission using values in $_POST
      *
-     * @param integer $id The Trial ID
+     * @param int $id The Trial ID
+     * @param int $user_id The ID of the User record to add the permission to
+     * @param int $permission The permission level the user will be given (view/edit/manage)
+     * @param string $role The role the user will have
      * @throws CHttpException Thrown if the permission couldn't be saved
      */
     public function actionAddPermission($id, $user_id, $permission, $role)
@@ -380,8 +383,8 @@ class TrialController extends BaseModuleController
     /**
      * Removes a UserTrialPermission
      *
-     * @param integer $id The ID of the trial
-     * @param integer $permission_id The ID of the permission to remove
+     * @param int $id The ID of the trial
+     * @param int $permission_id The ID of the permission to remove
      * @throws CHttpException Thrown if the permission cannot be found
      * @throws CDbException Thrown if the permission cannot be deleted
      */
@@ -400,21 +403,20 @@ class TrialController extends BaseModuleController
         }
 
         // THe last Manage permission in a trial can't be removed (there always has to be one manager for a trial)
-        if ($permission->permission == UserTrialPermission::PERMISSION_MANAGE) {
-            $count = UserTrialPermission::model()->count('trial_id = :trialId AND permission = :permission',
+        if ((int)$permission->permission === UserTrialPermission::PERMISSION_MANAGE) {
+            $managerCount = UserTrialPermission::model()->count('trial_id = :trialId AND permission = :permission',
                 array(
                     ':trialId' => $id,
                     ':permission' => UserTrialPermission::PERMISSION_MANAGE,
                 )
             );
 
-            if ($count <= 1) {
+            if ($managerCount <= 1) {
                 echo self::REMOVE_PERMISSION_RESULT_CANT_REMOVE_LAST;
 
                 return;
             }
         }
-
 
         if (!$permission->delete()) {
             throw new CHttpException(500,
@@ -441,8 +443,8 @@ class TrialController extends BaseModuleController
      * Transitions the given Trial to a new state.
      * A different return code is echoed out depending on whether the transition was successful
      *
-     * @param integer $id The ID of the trial to transition
-     * @param integer $new_state The new state to transition to (must be a valid state within Trial::getAllowedStatusRange()
+     * @param int $id The ID of the trial to transition
+     * @param int $new_state The new state to transition to (must be a valid state within Trial::getAllowedStatusRange()
      * @throws CHttpException Thrown if an error occurs when saving
      */
     public function actionTransitionState($id, $new_state)
@@ -450,19 +452,19 @@ class TrialController extends BaseModuleController
         /* @var Trial $model */
         $model = Trial::model()->findByPk($id);
 
-        if ($model->status == Trial::STATUS_OPEN && $new_state == Trial::STATUS_IN_PROGRESS && $model->hasShortlistedPatients()) {
+        if ((int)$model->status === Trial::STATUS_OPEN && (int)$new_state === Trial::STATUS_IN_PROGRESS && $model->hasShortlistedPatients()) {
             echo self::RETURN_CODE_CANT_OPEN_SHORTLISTED_TRIAL;
 
             return;
         }
 
-        if ($new_state == Trial::STATUS_CLOSED || $new_state == Trial::STATUS_CANCELLED) {
+        if ((int)$new_state === Trial::STATUS_CLOSED || (int)$new_state === Trial::STATUS_CANCELLED) {
             $model->closed_date = date('Y-m-d H:i:s');
         } else {
             $model->closed_date = null;
         }
 
-        if ($model->status == Trial::STATUS_OPEN && $new_state == Trial::STATUS_IN_PROGRESS) {
+        if ((int)$model->status === Trial::STATUS_OPEN && (int)$new_state === Trial::STATUS_IN_PROGRESS) {
             $model->started_date = date('Y-m-d H:i:s');
         }
 
@@ -495,9 +497,10 @@ class TrialController extends BaseModuleController
      * Gets a JSON encoded list of users that can be assigned to the Trial and that match the search term.
      * Users will not be returned if they are already assigned to the trial, or if they don't have the "View Trial" permission.
      *
-     * @param integer $id The trial ID
+     * @param int $id The trial ID
      * @param string $term The term to search for
      * @return string A JSON encoded array of users with id, label, username and value
+     * @throws CHttpException Thrown if an error occurs when loading the model
      */
     public function actionUserAutoComplete($id, $term)
     {
@@ -518,17 +521,18 @@ class TrialController extends BaseModuleController
         if (count($words) > 1) {
             $first_criteria = new \CDbCriteria();
             $first_criteria->compare('LOWER(first_name)', $words[0], true);
-            $first_criteria->compare('LOWER(last_name)', implode(" ", array_slice($words, 1, count($words) - 1)), true);
+            $first_criteria->compare('LOWER(last_name)', implode(' ', array_slice($words, 1, count($words) - 1)), true);
             $last_criteria = new \CDbCriteria();
             $last_criteria->compare('LOWER(first_name)', $words[count($words) - 1], true);
-            $last_criteria->compare('LOWER(last_name)', implode(" ", array_slice($words, 0, count($words) - 2)), true);
+            $last_criteria->compare('LOWER(last_name)', implode(' ', array_slice($words, 0, count($words) - 2)), true);
             $first_criteria->mergeWith($last_criteria, 'OR');
             $criteria->mergeWith($first_criteria, 'OR');
         }
 
         $criteria->compare('active', true);
 
-        foreach (\User::model()->findAll($criteria) as $user) {
+        /* @var User $user */
+        foreach (User::model()->findAll($criteria) as $user) {
 
             $res[] = array(
                 'id' => $user->id,
@@ -538,6 +542,6 @@ class TrialController extends BaseModuleController
             );
         }
 
-        echo \CJSON::encode($res);
+        echo CJSON::encode($res);
     }
 }

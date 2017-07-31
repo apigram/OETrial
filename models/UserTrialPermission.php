@@ -4,9 +4,9 @@
  * This is the model class for table "user_trial_permission".
  *
  * The followings are the available columns in table 'user_trial_permission':
- * @property integer $id
- * @property integer $user_id
- * @property integer $trial_id
+ * @property int $id
+ * @property int $user_id
+ * @property int $trial_id
  * @property string $permission
  * @property string $role
  * @property string $last_modified_user_id
@@ -22,9 +22,20 @@
  */
 class UserTrialPermission extends BaseActiveRecordVersioned
 {
-    const PERMISSION_VIEW = 0;
-    const PERMISSION_EDIT = 1;
-    const PERMISSION_MANAGE = 2;
+    /**
+     * The permission to see the trial, but not modify any part of it
+     */
+    const PERMISSION_VIEW = 1;
+
+    /**
+     * The permission to accept/reject patients and change their trial data
+     */
+    const PERMISSION_EDIT = 2;
+
+    /**
+     * The permission to do all edit actions, plus sharing and workflow
+     */
+    const PERMISSION_MANAGE = 3;
 
     /**
      * @return string the associated database table name
@@ -81,8 +92,6 @@ class UserTrialPermission extends BaseActiveRecordVersioned
      */
     public function relations()
     {
-        // NOTE: you may need to adjust the relation name and the related
-        // class name for the relations automatically generated below.
         return array(
             'user' => array(self::BELONGS_TO, 'User', 'user_id'),
             'createdUser' => array(self::BELONGS_TO, 'User', 'created_user_id'),
@@ -100,7 +109,7 @@ class UserTrialPermission extends BaseActiveRecordVersioned
             'user_id' => 'User',
             'trial_id' => 'Trial',
             'permission' => 'Permission',
-            'role' => 'User Role',
+            'role' => 'Role',
             'last_modified_user_id' => 'Last Modified User',
             'last_modified_date' => 'Last Modified Date',
             'created_user_id' => 'Created User',

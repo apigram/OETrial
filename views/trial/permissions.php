@@ -188,7 +188,7 @@ $canManageTrial = Trial::checkTrialAccess(Yii::app()->user, $model->id, UserTria
             role: $('#user_role').val()
           },
           'success': function (html) {
-            if (html == <?php echo TrialController::RETURN_CODE_USER_PERMISSION_ALREADY_EXISTS; ?>) {
+            if (html === '<?php echo TrialController::RETURN_CODE_USER_PERMISSION_ALREADY_EXISTS; ?>') {
               new OpenEyes.UI.Dialog.Alert({
                 content: "That patient has already been shared to this trial. To change their permissions, please remove them first and try again."
               }).open();

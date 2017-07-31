@@ -6,13 +6,13 @@
  * The followings are the available columns in table 'trial_patient':
  * @property integer $id
  * @property string $external_trial_identifier
- * @property integer $trial_id
- * @property integer $patient_id
- * @property integer $patient_status
- * @property integer $treatment_type
- * @property integer $last_modified_user_id
+ * @property int $trial_id
+ * @property int $patient_id
+ * @property int $patient_status
+ * @property int $treatment_type
+ * @property int $last_modified_user_id
  * @property string $last_modified_date
- * @property integer $created_user_id
+ * @property int $created_user_id
  * @property string $created_date
  *
  * The followings are the available model relations:
@@ -26,30 +26,30 @@ class TrialPatient extends BaseActiveRecordVersioned
     /**
      * The status when the patient has been just added to a Trial, but hasn't been accepted or rejected yet
      */
-    const STATUS_SHORTLISTED = 0;
+    const STATUS_SHORTLISTED = 1;
 
     /**
      * The status when the patient has been accepted into the Trial
      */
-    const STATUS_ACCEPTED = 1;
+    const STATUS_ACCEPTED = 2;
 
     /**
      * The status when the patient hsa been rejected from the Trial
      */
-    const STATUS_REJECTED = 2;
+    const STATUS_REJECTED = 3;
 
     /**
      * The treatment type when users don't know whether the patient had intervention treatment or not (also the default value)
      */
-    const TREATMENT_TYPE_UNKNOWN = 0;
+    const TREATMENT_TYPE_UNKNOWN = 1;
     /**
      * The treatment type when it is known that the patient had intervention surgery or medication
      */
-    const TREATMENT_TYPE_INTERVENTION = 1;
+    const TREATMENT_TYPE_INTERVENTION = 2;
     /**
      * The treatment type when the patient had a placebo instead of intervention surgery or medicine
      */
-    const TREATMENT_TYPE_PLACEBO = 2;
+    const TREATMENT_TYPE_PLACEBO = 3;
 
     /**
      * Gets an array of the different possible patient statuses
@@ -67,7 +67,7 @@ class TrialPatient extends BaseActiveRecordVersioned
     /**
      * Gets an array with keys as the different possible patient statuses, and the values as the label for that status
      *
-     * @return integer[] The status options
+     * @return int[] The status options
      */
     public static function getStatusOptions()
     {
@@ -94,7 +94,7 @@ class TrialPatient extends BaseActiveRecordVersioned
     /**
      * Gets an array with keys as the different possible treatment types, and the values as the label for that treatment type
      *
-     * @return integer[] The treatment options
+     * @return int[] The treatment options
      */
     public static function getTreatmentTypeOptions()
     {
@@ -126,7 +126,7 @@ class TrialPatient extends BaseActiveRecordVersioned
      */
     public function getTreatmentTypeForDisplay()
     {
-        if($this->trial->trial_type == Trial::TRIAL_TYPE_NON_INTERVENTION) {
+        if ((int)$this->trial->trial_type === Trial::TRIAL_TYPE_NON_INTERVENTION) {
             return 'N/A';
         }
 
@@ -162,7 +162,7 @@ class TrialPatient extends BaseActiveRecordVersioned
                 'trial_id',
                 'unique',
                 'criteria' => array(
-                    'condition' => '`patient_id`=:patientId',
+                    'condition' => '`patient_id`= :patientId',
                     'params' => array(
                         ':patientId' => $this->patient_id,
                     ),
@@ -220,11 +220,11 @@ class TrialPatient extends BaseActiveRecordVersioned
     /**
      * Checks whether a user has access to a certain TrialPatient
      *
-     * @param CWebuser $user The user to check access for
-     * @param integer $trial_patient_id The ID of the TrialPatient to check access for
-     * @param integer $permission The permission to check
+     * @param User $user The user to check access for
+     * @param int $trial_patient_id The ID of the TrialPatient to check access for
+     * @param int $permission The permission to check
      * @return bool True if $user is allowed to perform $permission on $trial_patient_id, otherwise false
-     * @throws CHttpException Thrown by Trial::checkTrialAccess()
+     * @throws CDbException Thrown by Trial::checkTrialAccess()
      */
     public static function checkTrialPatientAccess($user, $trial_patient_id, $permission)
     {

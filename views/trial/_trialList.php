@@ -1,8 +1,8 @@
 <?php
 /* @var TrialController $this */
 /* @var CActiveDataProvider $dataProvider */
-/* @var integer $sort_by */
-/* @var integer $sort_dir */
+/* @var int $sort_by */
+/* @var int $sort_dir */
 
 ?>
 <div class="box generic">

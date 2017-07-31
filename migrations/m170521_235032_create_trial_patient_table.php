@@ -12,7 +12,7 @@ class m170521_235032_create_trial_patient_table extends OEMigration
             'trial_id' => 'int(11) NOT NULL',
             'patient_id' => 'int(10) unsigned NOT NULL',
             'patient_status' => 'int(10) unsigned NOT NULL',
-            'treatment_type' => 'int(10) unsigned not null default 0',
+            'treatment_type' => 'int(10) unsigned NOT NULL',
         ), self::VERSIONED
         );
 

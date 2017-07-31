@@ -8,11 +8,11 @@ class TrialPatientController extends BaseModuleController
     /**
      * The return value for a actionChangeStatus() if the status change is successful
      */
-    const STATUS_CHANGE_CODE_OK = '0';
+    const STATUS_CHANGE_CODE_OK = 'success';
     /**
      * The return code for actionChangeStatus() if the patient is already in another intervention trial
      */
-    const STATUS_CHANGE_CODE_ALREADY_IN_INTERVENTION = '1';
+    const STATUS_CHANGE_CODE_ALREADY_IN_INTERVENTION = 'already_in_intervention';
 
     /**
      * @return array action filters
@@ -47,7 +47,7 @@ class TrialPatientController extends BaseModuleController
     /**
      * Returns the data model based on the primary key given in the GET variable.
      * If the data model is not found, an HTTP exception will be raised.
-     * @param integer $id the ID of the model to be loaded
+     * @param int $id the ID of the model to be loaded
      * @return TrialPatient the loaded model
      * @throws CHttpException
      */
@@ -76,16 +76,16 @@ class TrialPatientController extends BaseModuleController
 
     /**
      * Changes the status of a patient in a trial to a given value
-     * @param integer $id The id of the TrialPatient to change the status for
-     * @param integer $new_status The new status of the TrialPatient
+     * @param int $id The id of the TrialPatient to change the status for
+     * @param int $new_status The new status of the TrialPatient
      * @throws CHttpException Thrown the model cannot be saved
      */
     public function actionChangeStatus($id, $new_status)
     {
         $model = $this->loadModel($id);
 
-        if ($new_status == TrialPatient::STATUS_ACCEPTED &&
-            $model->trial->trial_type == Trial::TRIAL_TYPE_INTERVENTION &&
+        if ((int)$new_status === TrialPatient::STATUS_ACCEPTED &&
+            (int)$model->trial->trial_type === Trial::TRIAL_TYPE_INTERVENTION &&
             $model->patient->isCurrentlyInInterventionTrial()
         ) {
             echo self::STATUS_CHANGE_CODE_ALREADY_IN_INTERVENTION;
@@ -106,7 +106,7 @@ class TrialPatientController extends BaseModuleController
     /**
      * Changes the external_trial_identifier of a TrialPatient record
      *
-     * @param integer $id The ID of the TrialPatient record
+     * @param int $id The ID of the TrialPatient record
      * @param string $new_external_id The new external reference
      * @throws CHttpException Thrown if an error occurs when saving the model or if it cannot be found
      */
@@ -124,15 +124,15 @@ class TrialPatientController extends BaseModuleController
     /**
      * Updates the treatment type of a trial-patient with a new treatment type
      *
-     * @param integer $id The ID of the TrialPatient model to update
-     * @param integer $treatment_type The new treatment type
+     * @param int $id The ID of the TrialPatient model to update
+     * @param int $treatment_type The new treatment type
      * @throws CHttpException Thrown if an error occurs when saving the TrialPatient
      */
     public function actionUpdateTreatmentType($id, $treatment_type)
     {
         $model = $this->loadModel($id);
 
-        if ($model->trial->status != Trial::STATUS_CLOSED) {
+        if ((int)$model->trial->status !== Trial::STATUS_CLOSED) {
             throw new CHttpException(400, 'You cannot change the treatment type until the trial is closed.');
         }
 

@@ -4,17 +4,17 @@
  * This is the model class for table "trial".
  *
  * The followings are the available columns in table 'trial':
- * @property integer $id
+ * @property int $id
  * @property string $name
  * @property string $description
- * @property integer $owner_user_id
- * @property integer $status
- * @property integer $trial_type
+ * @property int $owner_user_id
+ * @property int $status
+ * @property int $trial_type
  * @property string $started_date
  * @property string $closed_date
  * @property string $last_modified_date
  * @property string $last_modified_user_id
- * @property integer $created_user_id
+ * @property int $created_user_id
  * @property string $created_date
  * @property string $external_reference
  *
@@ -30,32 +30,33 @@ class Trial extends BaseActiveRecordVersioned
     /**
      * The status when the Trial is first created
      */
-    const STATUS_OPEN = 0;
+    const STATUS_OPEN = 1;
 
     /**
      * The status when the Trial has begun (can only be moved here once all patients have accepted or rejected)
      */
-    const STATUS_IN_PROGRESS = 1;
+    const STATUS_IN_PROGRESS = 2;
 
     /**
      * The status when the Trial has been completed and closed (can only be moved here from STATUS_IN_PROGRESS)
      */
-    const STATUS_CLOSED = 2;
+    const STATUS_CLOSED = 3;
 
     /**
      * The status when the Trial has been closed prematurely
      */
-    const STATUS_CANCELLED = 3;
+    const STATUS_CANCELLED = 4;
+
 
     /**
      * The trial type for non-Intervention trial (meaning there are no restrictions on assigning patients to this the trial)
      */
-    const TRIAL_TYPE_NON_INTERVENTION = 0;
+    const TRIAL_TYPE_NON_INTERVENTION = 1;
 
     /**
      * The trial type for Intervention trials (meaning a patient can only be assigned to one ongoing Intervention trial at a time)
      */
-    const TRIAL_TYPE_INTERVENTION = 1;
+    const TRIAL_TYPE_INTERVENTION = 2;
 
     /**
      * @return string the associated database table name
@@ -80,20 +81,12 @@ class Trial extends BaseActiveRecordVersioned
             array('status', 'in', 'range' => self::getAllowedStatusRange()),
             array('trial_type', 'in', 'range' => self::getAllowedTrialTypeRange()),
             array('description, last_modified_date, created_date, closed_date', 'safe'),
-
-            // The following rule is used by search().
-            // @todo Please remove those attributes that should not be searched.
-            array(
-                'id, name, description, owner_user_id, status, last_modified_date, last_modified_user_id, created_user_id, created_date',
-                'safe',
-                'on' => 'search',
-            ),
         );
     }
 
     /**
      * Returns an array of all of the allowable values of "status"
-     * @return integer[] The list of statuses
+     * @return int[] The list of statuses
      */
     public static function getAllowedStatusRange()
     {
@@ -121,7 +114,7 @@ class Trial extends BaseActiveRecordVersioned
 
     /**
      * Returns an array of all of the allowable values of "trial_type"
-     * @return integer[] The list of types
+     * @return int[] The list of types
      */
     public static function getAllowedTrialTypeRange()
     {
@@ -190,21 +183,23 @@ class Trial extends BaseActiveRecordVersioned
     {
         if ($this->started_date === null) {
             return null;
-        } elseif ($this->closed_date !== null) {
-            return Helper::formatFuzzyDate($this->closed_date);
-        } else {
-            return 'present';
         }
+
+        if ($this->closed_date !== null) {
+            return Helper::formatFuzzyDate($this->closed_date);
+        }
+
+        return 'present';
     }
 
 
     /**
+     * Gets the relation rules for Trial
+     *
      * @return array relational rules.
      */
     public function relations()
     {
-        // NOTE: you may need to adjust the relation name and the related
-        // class name for the relations automatically generated below.
         return array(
             'ownerUser' => array(self::BELONGS_TO, 'User', 'owner_user_id'),
             'createdUser' => array(self::BELONGS_TO, 'User', 'created_user_id'),
@@ -272,8 +267,8 @@ class Trial extends BaseActiveRecordVersioned
     /**
      * Returns whether or not the given user can access the given trial using the given action
      * @param User $user The user to check access for
-     * @param integer $trial_id The ID of the trial
-     * @param integer $permission The ID of the controller action
+     * @param int $trial_id The ID of the trial
+     * @param int $permission The ID of the controller action
      * @return bool True if access is permitted, otherwise false
      * @throws CDbException Thrown if an error occurs when looking up the user permissions
      */
@@ -288,7 +283,7 @@ class Trial extends BaseActiveRecordVersioned
 
     /**
      * @param User $user The user to get access for
-     * @return integer The user permission if they have one otherwise null)
+     * @return int The user permission if they have one otherwise null)
      * @throws CDbException Thrown if an error occurs when executing the SQL statement
      */
     public function getTrialAccess($user)
@@ -310,7 +305,6 @@ class Trial extends BaseActiveRecordVersioned
             array(':trialId' => $this->id, ':patientStatus' => TrialPatient::STATUS_SHORTLISTED));
     }
 
-
     /**
      * Gets the data providers for each patient status
      * @param string $sort_by The field name to sort by
@@ -331,7 +325,7 @@ class Trial extends BaseActiveRecordVersioned
 
     /**
      * Create a data provider for patients in the Trial
-     * @param integer $patient_status The status of patients of
+     * @param int $patient_status The status of patients of
      * @param string $sort_by The field name to sort by
      * @param string $sort_dir The direction to sort the results by
      * @return CActiveDataProvider The data provider of patients with the given status
@@ -339,7 +333,7 @@ class Trial extends BaseActiveRecordVersioned
      */
     public function getPatientDataProvider($patient_status, $sort_by, $sort_dir)
     {
-        if (!in_array($patient_status, TrialPatient::getAllowedStatusRange())) {
+        if (!in_array((int)$patient_status, TrialPatient::getAllowedStatusRange(), true)) {
             throw new CException("Unknown Trial Patient status: $patient_status");
         }
 

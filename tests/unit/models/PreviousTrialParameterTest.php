@@ -194,7 +194,8 @@ WHERE $condition";
     public function testTreatmentTypeBindValues()
     {
         $this->object->treatmentType = '';
-        $this->assertEmpty($this->object->bindValues(), 'The treatment type bind should not be set if the parameter is blank');
+        $this->assertEmpty($this->object->bindValues(),
+            'The treatment type bind should not be set if the parameter is blank');
 
         $this->object->treatmentType = TrialPatient::TREATMENT_TYPE_PLACEBO;
         $expected = array(
@@ -209,7 +210,8 @@ WHERE $condition";
             ':p_t_type_0' => $this->object->type,
         );
         $result = $this->object->bindValues();
-        $this->assertEquals($expected, $result, 'The treatment type parameter should not be set for non-intervention trials: ');
+        $this->assertEquals($expected, $result,
+            'The treatment type parameter should not be set for non-intervention trials: ');
     }
 
 }

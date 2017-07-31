@@ -13,18 +13,18 @@ $hasManagePermissions = Trial::checkTrialAccess(Yii::app()->user, $model->id, Us
   <div class="large-9 column">
     <div class="box admin">
 
-        <?php if ($model->trial_type == Trial::TRIAL_TYPE_INTERVENTION): ?>
+        <?php if ((int)$model->trial_type === Trial::TRIAL_TYPE_INTERVENTION): ?>
           <div class="alert-box alert with-icon">
             This is an Intervention Trial. Patients accepted into this Trial cannot be accepted into other Intervention
             Trials
           </div>
         <?php endif; ?>
 
-        <?php if ($model->status == Trial::STATUS_CANCELLED): ?>
+        <?php if ((int)$model->status === Trial::STATUS_CANCELLED): ?>
           <div class="alert-box alert with-icon">This Trial has been cancelled. You will need to reopen it before you
             can make any changes.
           </div>
-        <?php elseif ($model->status == Trial::STATUS_CLOSED): ?>
+        <?php elseif ((int)$model->status === Trial::STATUS_CLOSED): ?>
           <div class="alert-box alert with-icon">This Trial has been closed. You will need to reopen it before you
             can make any changes.
           </div>
@@ -35,7 +35,7 @@ $hasManagePermissions = Trial::checkTrialAccess(Yii::app()->user, $model->id, Us
 
           </h1>
           <h3 style="display: inline">
-              <?php if ($model->status != Trial::STATUS_CANCELLED && $hasEditPermissions): ?>
+              <?php if ((int)$model->status !== Trial::STATUS_CANCELLED && $hasEditPermissions): ?>
                   <?php echo CHtml::link('<u>edit</u>', array(
                       '/OETrial/trial/update',
                       'id' => $model->id,
@@ -71,9 +71,9 @@ $hasManagePermissions = Trial::checkTrialAccess(Yii::app()->user, $model->id, Us
         <?php if ($hasManagePermissions): ?>
           <br/>
 
-            <?php if (in_array($model->status,
-                array(Trial::STATUS_OPEN, Trial::STATUS_CANCELLED, Trial::STATUS_CLOSED))): ?>
-                <?php echo CHtml::button($model->status == Trial::STATUS_OPEN ? 'Start Trial' : 'Re-open Trial',
+            <?php if (in_array((int)$model->status,
+                array(Trial::STATUS_OPEN, Trial::STATUS_CANCELLED, Trial::STATUS_CLOSED), true)): ?>
+                <?php echo CHtml::button((int)$model->status === Trial::STATUS_OPEN ? 'Start Trial' : 'Re-open Trial',
                     array(
                         'id' => 'start-trial-button',
                         'class' => 'small button primary event-action',
@@ -81,7 +81,7 @@ $hasManagePermissions = Trial::checkTrialAccess(Yii::app()->user, $model->id, Us
                     )); ?>
             <?php endif; ?>
 
-            <?php if ($model->status == Trial::STATUS_IN_PROGRESS): ?>
+            <?php if ((int)$model->status === Trial::STATUS_IN_PROGRESS): ?>
                 <?php echo CHtml::button('Close Trial', array(
                     'id' => 'close-trial-button',
                     'class' => 'small button primary event-action',
@@ -90,7 +90,7 @@ $hasManagePermissions = Trial::checkTrialAccess(Yii::app()->user, $model->id, Us
 
             <?php endif; ?>
 
-            <?php if (in_array($model->status, array(Trial::STATUS_OPEN, Trial::STATUS_IN_PROGRESS))): ?>
+            <?php if ((int)$model->status === Trial::STATUS_OPEN || (int)$model->status === Trial::STATUS_IN_PROGRESS): ?>
                 <?php echo CHtml::button('Cancel Trial', array(
                     'id' => 'cancel-trial-button',
                     'class' => 'small button primary event-action',
@@ -135,7 +135,7 @@ $hasManagePermissions = Trial::checkTrialAccess(Yii::app()->user, $model->id, Us
 
   <div class="large-3 column">
     <div class="box generic">
-        <?php if ($model->status != Trial::STATUS_CANCELLED && $hasEditPermissions): ?>
+        <?php if ((int)$model->status !== Trial::STATUS_CANCELLED && $hasEditPermissions): ?>
           <p>
                 <span class="highlight">
                     <?php echo CHtml::link('Search for patients to add',
@@ -185,9 +185,9 @@ Yii::app()->getClientScript()->registerScriptFile($assetPath . '/js/toggle-secti
       data: {id: trial_patient_id, new_status: new_status},
       type: 'GET',
       success: function (response) {
-        if (response == '<?php echo TrialPatientController::STATUS_CHANGE_CODE_OK; ?>') {
+        if (response === '<?php echo TrialPatientController::STATUS_CHANGE_CODE_OK; ?>') {
           window.location.reload(false);
-        } else if (response == '<?php echo TrialPatientController::STATUS_CHANGE_CODE_ALREADY_IN_INTERVENTION; ?>') {
+        } else if (response === '<?php echo TrialPatientController::STATUS_CHANGE_CODE_ALREADY_IN_INTERVENTION; ?>') {
           new OpenEyes.UI.Dialog.Alert({
             content: "You can't accept this patient into your Trial because the patient has already been accepted into another Intervention trial."
           }).open();
@@ -277,9 +277,9 @@ Yii::app()->getClientScript()->registerScriptFile($assetPath . '/js/toggle-secti
       data: {id: trial_id, new_state: new_state},
       type: 'GET',
       success: function (response) {
-        if (response == '<?php echo TrialController::RETURN_CODE_OK; ?>') {
+        if (response === '<?php echo TrialController::RETURN_CODE_OK; ?>') {
           location.reload();
-        } else if (response == '<?php echo TrialController::RETURN_CODE_CANT_OPEN_SHORTLISTED_TRIAL; ?>') {
+        } else if (response === '<?php echo TrialController::RETURN_CODE_CANT_OPEN_SHORTLISTED_TRIAL; ?>') {
           new OpenEyes.UI.Dialog.Alert({
             content: "You can't start the trial while some patients are still shortlisted. Either accept or reject them into the Trial before continuing.."
           }).open();

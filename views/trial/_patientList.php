@@ -4,12 +4,12 @@
 /* @var CActiveDataProvider $dataProvider */
 /* @var string $listId */
 /* @var string $title */
-/* @var integer $sort_by */
-/* @var integer $sort_dir */
+/* @var int $sort_by */
+/* @var int $sort_dir */
 ?>
 
 <?php
-if ($dataProvider->totalItemCount == 0): ?>
+if ((int)$dataProvider->getTotalItemCount() === 0): ?>
   <h2>
       <?php echo $title; ?>
   </h2>
@@ -42,7 +42,7 @@ if ($dataProvider->totalItemCount == 0): ?>
             'External Reference',
         );
 
-        if ($trial->trial_type == Trial::TRIAL_TYPE_INTERVENTION) {
+        if ((int)$trial->trial_type === Trial::TRIAL_TYPE_INTERVENTION) {
             $columns[] = 'Treatment Type';
         }
 

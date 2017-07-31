@@ -9,7 +9,6 @@
 
     <div class="box admin">
       <h1 class="text-center">Update Trial Details</h1>
-
         <?php $this->renderPartial('_form', array('model' => $model)); ?>
     </div>
   </div>

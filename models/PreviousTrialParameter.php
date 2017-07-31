@@ -100,7 +100,7 @@ class PreviousTrialParameter extends CaseSearchParameter implements DBProviderIn
           </div>
           <br/>
           <div class="row treatment-type-container"
-               <?php if ($this->type !== '' && $this->type !== null && $this->type == Trial::TRIAL_TYPE_NON_INTERVENTION): ?>style="display:none" <?php endif; ?>>
+               <?php if ($this->type !== '' && $this->type !== null && (int)$this->type === Trial::TRIAL_TYPE_NON_INTERVENTION): ?>style="display:none" <?php endif; ?>>
             <div class="large-2 column">&nbsp;</div>
             <div class="large-2 column">
               <p style="float: right; margin: 5px">and was given</p>
