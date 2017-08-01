@@ -48,24 +48,28 @@ if ($isInAnotherInterventionTrial) {
       <?php echo CHtml::encode($data->patient->getEthnicGroupString()); ?>
   </td>
   <td> <!-- External Reference -->
-    <span id="ext-trial-id-<?php echo $data->id; ?>">
-              <?php echo CHtml::encode($data->external_trial_identifier); ?>
-            </span>
       <?php if ($canEditPatient && (int)$data->trial->status !== Trial::STATUS_CANCELLED): ?>
 
-        <input id="ext-trial-id-form-<?php echo $data->id; ?>" type="text"
-               value="<?php echo CHtml::encode($data->external_trial_identifier); ?>" width="50"
-               style="display:none;"/>
-      <?php endif; ?>
+          <?php echo CHtml::textField(
+              "ext-trial-id-form-$data->id",
+              $data->external_trial_identifier,
+              array(
+                  'onkeyup' => "onExternalTrialIdentifierChange($data->id)",
+              )
+          ); ?>
 
-      <?php if ($canEditPatient && (int)$data->trial->status !== Trial::STATUS_CANCELLED): ?>
+          <?php echo CHtml::hiddenField("external-trial-id-hidden-$data->id", $data->external_trial_identifier); ?>
+        <div id="ext-trial-id-actions-<?php echo $data->id; ?>" style="display:none;">
+          <a href="javascript:void(0)" onclick="saveExternalTrialIdentifier(<?php echo $data->id; ?>)">Save</a>
+          <a href="javascript:void(0)" onclick="cancelExternalTrialIdentifier(<?php echo $data->id; ?>)">Cancel</a>
+          <img id="ext-trial-id-loader-<?php echo $data->id; ?>" class="loader"
+              src="<?php echo Yii::app()->assetManager->createUrl('img/ajax-loader.gif') ?>"
+              alt="loading..." style="display: none;"/>
+        </div>
 
-        <a id="ext-trial-id-edit-<?php echo $data->id; ?>" href="javascript:void(0)"
-           onclick="editExternalTrialIdentifier(<?php echo $data->id; ?>)">edit</a>
-        <a id="ext-trial-id-save-<?php echo $data->id; ?>" href="javascript:void(0)"
-           onclick="saveExternalTrialIdentifier(<?php echo $data->id; ?>)" style="display:none;">save</a>
-        <img class="loader" src="<?php echo Yii::app()->assetManager->createUrl('img/ajax-loader.gif') ?>"
-             alt="loading..." style="display: none;"/>
+
+      <?php else: ?>
+          <?php echo CHtml::encode($data->external_trial_identifier); ?>
       <?php endif; ?>
   </td>
     <?php if ((int)$data->trial->trial_type === Trial::TRIAL_TYPE_INTERVENTION): ?>
@@ -88,9 +92,6 @@ if ($isInAnotherInterventionTrial) {
               <img id="treatment-type-loader-<?php echo $data->id; ?>"
                    src="<?php echo Yii::app()->assetManager->createUrl('img/ajax-loader.gif') ?>" alt="Working..."
                    class="hidden"/>
-              <img id="treatment-type-success-<?php echo $data->id; ?>"
-                   src="<?php echo Yii::app()->assetManager->createUrl('img/_elements/icons/event-optional/element-added.png'); ?>"
-                   alt="Success" class="hidden"/>
             </div>
 
           <?php else: /* can't edit */ ?>
