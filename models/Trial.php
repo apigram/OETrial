@@ -31,17 +31,14 @@ class Trial extends BaseActiveRecordVersioned
      * The status when the Trial is first created
      */
     const STATUS_OPEN = 1;
-
     /**
      * The status when the Trial has begun (can only be moved here once all patients have accepted or rejected)
      */
     const STATUS_IN_PROGRESS = 2;
-
     /**
      * The status when the Trial has been completed and closed (can only be moved here from STATUS_IN_PROGRESS)
      */
     const STATUS_CLOSED = 3;
-
     /**
      * The status when the Trial has been closed prematurely
      */
@@ -57,6 +54,40 @@ class Trial extends BaseActiveRecordVersioned
      * The trial type for Intervention trials (meaning a patient can only be assigned to one ongoing Intervention trial at a time)
      */
     const TRIAL_TYPE_INTERVENTION = 2;
+
+    /**
+     * The success return code for addUserPermission()
+     */
+    const RETURN_CODE_USER_PERMISSION_OK = 'success';
+
+    /**
+     * The return code for addUserPermission() if the user tried to share the trial with a user that it is
+     * already shared with
+     */
+    const RETURN_CODE_USER_PERMISSION_ALREADY_EXISTS = 'permission_already_exists';
+
+    /**
+     * The return code for actionRemovePermission() if all went well
+     */
+    const REMOVE_PERMISSION_RESULT_SUCCESS = 'success';
+    /**
+     * The return code for actionRemovePermission() if the user tried to remove the last user with manage privileges
+     */
+    const REMOVE_PERMISSION_RESULT_CANT_REMOVE_LAST = 'remove_last_fail';
+    /**
+     * The return code for actionRemovePermission() if the user tried to remove themselves from the Trial
+     */
+    const REMOVE_PERMISSION_RESULT_CANT_REMOVE_SELF = 'remove_self_fail';
+
+    /**
+     * The return code for actionTransitionState() if the transition was a success
+     */
+    const RETURN_CODE_OK = 'success';
+    /**
+     * The return code for actionTransitionState() if the user tried to transition an open trial to in progress
+     * while a patient is still shortlisted
+     */
+    const RETURN_CODE_CANT_OPEN_SHORTLISTED_TRIAL = 'cant_open_with_shortlisted_patients';
 
     /**
      * @return string the associated database table name
@@ -192,7 +223,6 @@ class Trial extends BaseActiveRecordVersioned
         return 'present';
     }
 
-
     /**
      * Gets the relation rules for Trial
      *
@@ -314,7 +344,6 @@ class Trial extends BaseActiveRecordVersioned
      */
     public function getPatientDataProviders($sort_by, $sort_dir)
     {
-
         $dataProviders = array();
         foreach (TrialPatient::getAllowedStatusRange() as $index => $status) {
             $dataProviders[$status] = $this->getPatientDataProvider($status, $sort_by, $sort_dir);
@@ -397,5 +426,157 @@ class Trial extends BaseActiveRecordVersioned
         $trialModels = Trial::model()->findAll('trial_type=:type', array(':type' => $type));
 
         return CHtml::listData($trialModels, 'id', 'name');
+    }
+
+    /**
+     * Adds a patient to the trial
+     *
+     * @param Patient $patient THe patient to add
+     * @param int $patient_status The initial trial status for the patient (default to shortlisted)
+     * @throws Exception Thrown if an error occurs when saving the TrialPatient record
+     */
+    public function addPatient(Patient $patient, $patient_status)
+    {
+        $trialPatient = new TrialPatient();
+        $trialPatient->trial_id = $this->id;
+        $trialPatient->patient_id = $patient->id;
+        $trialPatient->patient_status = $patient_status;
+        $trialPatient->treatment_type = TrialPatient::TREATMENT_TYPE_UNKNOWN;
+
+        if (!$trialPatient->save()) {
+            throw new Exception(
+                'Unable to create TrialPatient: ' . print_r($trialPatient->getErrors(), true));
+        }
+    }
+
+    /**
+     * @param int $patient_id The id of the patient to remove
+     * @throws Exception Raised when an error occurs when removing the record
+     */
+    public function removePatient($patient_id)
+    {
+        $trialPatient = TrialPatient::model()->find(
+            'patient_id = :patientId AND trial_id = :trialId',
+            array(
+                ':patientId' => $patient_id,
+                ':trialId' => $this->id,
+            )
+        );
+
+        if ($trialPatient === null) {
+            throw new Exception("Patient $patient_id cannot be removed from Trial $this->>id");
+        }
+
+        if (!$trialPatient->delete()) {
+            throw new Exception('Unable to delete TrialPatient: ' . print_r($trialPatient->getErrors(), true));
+        }
+    }
+
+    /**
+     * Creates a new Trial Permission using values in $_POST
+     *
+     * @param int $user_id The ID of the User record to add the permission to
+     * @param int $permission The permission level the user will be given (view/edit/manage)
+     * @param string $role The role the user will have
+     * @returns string The return code
+     * @throws Exception Thrown if the permission couldn't be saved
+     */
+    public function addUserPermission($user_id, $permission, $role)
+    {
+        if (UserTrialPermission::model()->exists(
+            'trial_id = :trialId AND user_id = :userId',
+            array(
+                ':trialId' => $this->id,
+                ':userId' => $user_id,
+            ))
+        ) {
+            return self::RETURN_CODE_USER_PERMISSION_ALREADY_EXISTS;
+        }
+
+        $userPermission = new UserTrialPermission();
+        $userPermission->trial_id = $this->id;
+        $userPermission->user_id = $user_id;
+        $userPermission->permission = $permission;
+        $userPermission->role = $role;
+
+        if (!$userPermission->save()) {
+            throw new Exception('Unable to create UserTrialPermission: ' . print_r($userPermission->getErrors(), true));
+        }
+
+        return self::RETURN_CODE_USER_PERMISSION_OK;
+    }
+
+    /**
+     * Removes a UserTrialPermission
+     *
+     * @param int $permission_id The ID of the permission to remove
+     * @throws CHttpException Thrown if the permission cannot be found
+     * @return string The return code
+     * @throws Exception Thrown if the permission cannot be deleted
+     */
+    public function removeUserPermission($permission_id)
+    {
+        /* @var UserTrialPermission $permission */
+        $permission = UserTrialPermission::model()->findByPk($permission_id);
+        if ($permission->trial->id !== $this->id) {
+            throw new CHttpException(400);
+        }
+
+        if ($permission->user_id === Yii::app()->user->id) {
+            return self::REMOVE_PERMISSION_RESULT_CANT_REMOVE_SELF;
+        }
+
+        // THe last Manage permission in a trial can't be removed (there always has to be one manager for a trial)
+        if ((int)$permission->permission === UserTrialPermission::PERMISSION_MANAGE) {
+            $managerCount = UserTrialPermission::model()->count('trial_id = :trialId AND permission = :permission',
+                array(
+                    ':trialId' => $this->id,
+                    ':permission' => UserTrialPermission::PERMISSION_MANAGE,
+                )
+            );
+
+            if ($managerCount <= 1) {
+                return self::REMOVE_PERMISSION_RESULT_CANT_REMOVE_LAST;
+            }
+        }
+
+        if (!$permission->delete()) {
+            throw new Exception('An error occurred when attempting to delete the permission: '
+                . print_r($permission->getErrors(), true));
+        }
+
+        return self::REMOVE_PERMISSION_RESULT_SUCCESS;
+    }
+
+    /**
+     * Transitions the given Trial to a new state.
+     * A different return code is echoed out depending on whether the transition was successful
+     *
+     * @param int $new_state The new state to transition to (must be a valid state within Trial::getAllowedStatusRange()
+     * @return string The return  code
+     * @throws CHttpException Thrown if an error occurs when saving
+     */
+    public function transitionState($new_state)
+    {
+        if ((int)$this->status === Trial::STATUS_OPEN && (int)$new_state === Trial::STATUS_IN_PROGRESS && $this->hasShortlistedPatients()) {
+            return self::RETURN_CODE_CANT_OPEN_SHORTLISTED_TRIAL;
+        }
+
+        if ((int)$new_state === Trial::STATUS_CLOSED || (int)$new_state === Trial::STATUS_CANCELLED) {
+            $this->closed_date = date('Y-m-d H:i:s');
+        } else {
+            $this->closed_date = null;
+        }
+
+        if ((int)$this->status === Trial::STATUS_OPEN && (int)$new_state === Trial::STATUS_IN_PROGRESS) {
+            $this->started_date = date('Y-m-d H:i:s');
+        }
+
+        $this->status = $new_state;
+        if (!$this->save()) {
+            throw new Exception('An error occurred when attempting to change the status: ' . print_r($this->getErrors(), true));
+        }
+
+        return self::RETURN_CODE_OK;
     }
 }

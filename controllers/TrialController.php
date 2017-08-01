@@ -6,36 +6,6 @@
 class TrialController extends BaseModuleController
 {
     /**
-     * The return code for actionTransitionState() if the transition was a success
-     */
-    const RETURN_CODE_OK = 'success';
-    /**
-     * The return code for actionTransitionState() if the user tried to transition an open trial to in progress
-     * while a patient is still shortlisted
-     */
-    const RETURN_CODE_CANT_OPEN_SHORTLISTED_TRIAL = 'cant_open_with_shortlisted_patients';
-
-    /**
-     * The return code for actionAddPermission() if the user tried to share the trial with a user that it is
-     * already shared with
-     */
-    const RETURN_CODE_USER_PERMISSION_ALREADY_EXISTS = 'permission_already_exists';
-
-
-    /**
-     * The return code for actionRemovePermission() if all went well
-     */
-    const REMOVE_PERMISSION_RESULT_SUCCESS = 'success';
-    /**
-     * The return code for actionRemovePermission() if the user tried to remove the last user with manage privileges
-     */
-    const REMOVE_PERMISSION_RESULT_CANT_REMOVE_LAST = 'remove_last_fail';
-    /**
-     * The return code for actionRemovePermission() if the user tried to remove themselves from the Trial
-     */
-    const REMOVE_PERMISSION_RESULT_CANT_REMOVE_SELF = 'remove_self_fail';
-
-    /**
      * @return array action filters
      */
     public function filters()
@@ -264,58 +234,6 @@ class TrialController extends BaseModuleController
     }
 
     /**
-     * Adds a patient to the trial
-     *
-     * @param int $id The ID of the Trial to add to
-     * @param int $patient_id THe ID of the patient to add
-     * @param int $patient_status The initial trial status for the patient (default to shortlisted)
-     * @throws Exception Thrown if an error occurs when saving the TrialPatient record
-     */
-    public function actionAddPatient($id, $patient_id, $patient_status = TrialPatient::STATUS_SHORTLISTED)
-    {
-        $trial = Trial::model()->findByPk($id);
-        $patient = Patient::model()->findByPk($patient_id);
-
-        $trialPatient = new TrialPatient();
-        $trialPatient->trial_id = $trial->id;
-        $trialPatient->patient_id = $patient->id;
-        $trialPatient->patient_status = $patient_status;
-        $trialPatient->treatment_type = TrialPatient::TREATMENT_TYPE_UNKNOWN;
-
-        if (!$trialPatient->save()) {
-            throw new CHttpException(400,
-                'Unable to create TrialPatient: ' . print_r($trialPatient->getErrors(), true));
-        }
-    }
-
-    /**
-     * @param int $id The id of the trial to remove
-     * @param int $patient_id The id of the patient to remove
-     * @throws CHttpException Raised when the record cannot be found
-     * @throws Exception Raised when an error occurs when removing the record
-     */
-    public function actionRemovePatient($id, $patient_id)
-    {
-        $trialPatient = TrialPatient::model()->find(
-            'patient_id = :patientId AND trial_id = :trialId',
-            array(
-                ':patientId' => $patient_id,
-                ':trialId' => $id,
-            )
-        );
-
-        if ($trialPatient === null) {
-            throw new CHttpException(400, "Patient $patient_id cannot be removed from Trial $id");
-        }
-
-
-        if (!$trialPatient->delete()) {
-            throw new CHttpException(400,
-                'Unable to delete TrialPatient: ' . print_r($trialPatient->getErrors(), true));
-        }
-    }
-
-    /**
      * Displays the permissions screen
      *
      * @param int $id The ID of the Trial
@@ -344,40 +262,47 @@ class TrialController extends BaseModuleController
     }
 
     /**
+     * Adds a patient to the trial
+     *
+     * @param int $id The ID of the Trial to add to
+     * @param int $patient_id THe ID of the patient to add
+     * @param int $patient_status The initial trial status for the patient (default to shortlisted)
+     * @throws Exception Thrown if an error occurs when saving the TrialPatient record
+     */
+    public function actionAddPatient($id, $patient_id, $patient_status = TrialPatient::STATUS_SHORTLISTED)
+    {
+        $trial = $this->loadModel($id);
+        /* @var Patient $patient */
+        $patient = Patient::model()->findByPk($patient_id);
+        $trial->addPatient($patient, $patient_status);
+    }
+
+    /**
+     * @param int $id The id of the trial to remove
+     * @param int $patient_id The id of the patient to remove
+     * @throws CHttpException Raised when the record cannot be found
+     * @throws Exception Raised when an error occurs when removing the record
+     */
+    public function actionRemovePatient($id, $patient_id)
+    {
+        $trial = $this->loadModel($id);
+        $trial->removePatient($patient_id);
+    }
+
+    /**
      * Creates a new Trial Permission using values in $_POST
      *
      * @param int $id The Trial ID
      * @param int $user_id The ID of the User record to add the permission to
      * @param int $permission The permission level the user will be given (view/edit/manage)
      * @param string $role The role the user will have
-     * @throws CHttpException Thrown if the permission couldn't be saved
+     * @throws Exception Thrown if the permission couldn't be saved
      */
     public function actionAddPermission($id, $user_id, $permission, $role)
     {
-        if (UserTrialPermission::model()->exists(
-            'trial_id = :trialId AND user_id = :userId',
-            array(
-                ':trialId' => $id,
-                ':userId' => $user_id,
-            ))
-        ) {
-            echo self::RETURN_CODE_USER_PERMISSION_ALREADY_EXISTS;
-
-            return;
-        }
-
-        $userPermission = new UserTrialPermission();
-        $userPermission->trial_id = $id;
-        $userPermission->user_id = $user_id;
-        $userPermission->permission = $permission;
-        $userPermission->role = $role;
-
-        if (!$userPermission->save()) {
-            throw new CHttpException(400,
-                'Unable to create UserTrialPermission: ' . print_r($permission->getErrors(), true));
-        }
-
-        echo self::RETURN_CODE_OK;
+        $trial = $this->loadModel($id);
+        $result = $trial->addUserPermission($user_id, $permission, $role);
+        echo $result;
     }
 
     /**
@@ -386,45 +311,13 @@ class TrialController extends BaseModuleController
      * @param int $id The ID of the trial
      * @param int $permission_id The ID of the permission to remove
      * @throws CHttpException Thrown if the permission cannot be found
-     * @throws CDbException Thrown if the permission cannot be deleted
+     * @throws Exception Thrown if the permission cannot be deleted
      */
     public function actionRemovePermission($id, $permission_id)
     {
-        /* @var UserTrialPermission $permission */
-        $permission = UserTrialPermission::model()->findByPk($permission_id);
-        if ($permission->trial->id !== $id) {
-            throw new CHttpException(400);
-        }
-
-        if ($permission->user_id === Yii::app()->user->id) {
-            echo self::REMOVE_PERMISSION_RESULT_CANT_REMOVE_SELF;
-
-            return;
-        }
-
-        // THe last Manage permission in a trial can't be removed (there always has to be one manager for a trial)
-        if ((int)$permission->permission === UserTrialPermission::PERMISSION_MANAGE) {
-            $managerCount = UserTrialPermission::model()->count('trial_id = :trialId AND permission = :permission',
-                array(
-                    ':trialId' => $id,
-                    ':permission' => UserTrialPermission::PERMISSION_MANAGE,
-                )
-            );
-
-            if ($managerCount <= 1) {
-                echo self::REMOVE_PERMISSION_RESULT_CANT_REMOVE_LAST;
-
-                return;
-            }
-        }
-
-        if (!$permission->delete()) {
-            throw new CHttpException(500,
-                'An error occurred when attempting to delete the permission: '
-                . print_r($permission->getErrors(), true));
-        }
-
-        echo self::REMOVE_PERMISSION_RESULT_SUCCESS;
+        $trial = $this->loadModel($id);
+        $result = $trial->removeUserPermission($permission_id);
+        echo $result;
     }
 
     /**
@@ -449,31 +342,9 @@ class TrialController extends BaseModuleController
      */
     public function actionTransitionState($id, $new_state)
     {
-        /* @var Trial $model */
-        $model = Trial::model()->findByPk($id);
-
-        if ((int)$model->status === Trial::STATUS_OPEN && (int)$new_state === Trial::STATUS_IN_PROGRESS && $model->hasShortlistedPatients()) {
-            echo self::RETURN_CODE_CANT_OPEN_SHORTLISTED_TRIAL;
-
-            return;
-        }
-
-        if ((int)$new_state === Trial::STATUS_CLOSED || (int)$new_state === Trial::STATUS_CANCELLED) {
-            $model->closed_date = date('Y-m-d H:i:s');
-        } else {
-            $model->closed_date = null;
-        }
-
-        if ((int)$model->status === Trial::STATUS_OPEN && (int)$new_state === Trial::STATUS_IN_PROGRESS) {
-            $model->started_date = date('Y-m-d H:i:s');
-        }
-
-        $model->status = $new_state;
-        if (!$model->save()) {
-            throw new CHttpException(403, 'An error occurred when attempting to change the status');
-        }
-
-        echo self::RETURN_CODE_OK;
+       $trial = $this->loadModel($id);
+       $result = $trial->transitionState($new_state);
+       echo $result;
     }
 
     /**

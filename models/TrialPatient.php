@@ -52,6 +52,15 @@ class TrialPatient extends BaseActiveRecordVersioned
     const TREATMENT_TYPE_PLACEBO = 3;
 
     /**
+     * The return value for a actionChangeStatus() if the status change is successful
+     */
+    const STATUS_CHANGE_CODE_OK = 'success';
+    /**
+     * The return code for actionChangeStatus() if the patient is already in another intervention trial
+     */
+    const STATUS_CHANGE_CODE_ALREADY_IN_INTERVENTION = 'already_in_intervention';
+
+    /**
      * Gets an array of the different possible patient statuses
      * @return array The array of statues
      */
@@ -232,5 +241,62 @@ class TrialPatient extends BaseActiveRecordVersioned
         $model = TrialPatient::model()->findByPk($trial_patient_id);
 
         return Trial::checkTrialAccess($user, $model->trial_id, $permission);
+    }
+
+    /**
+     * Changes the status of a patient in a trial to a given value
+     * @param int $new_status The new status of the TrialPatient
+     * @returns string The return code
+     * @throws Exception Thrown the model cannot be saved
+     */
+    public function changeStatus($new_status)
+    {
+        if ((int)$new_status === TrialPatient::STATUS_ACCEPTED &&
+            (int)$this->trial->trial_type === Trial::TRIAL_TYPE_INTERVENTION &&
+            $this->patient->isCurrentlyInInterventionTrial()
+        ) {
+            return self::STATUS_CHANGE_CODE_ALREADY_IN_INTERVENTION;
+        }
+
+        $this->patient_status = $new_status;
+        if (!$this->save()) {
+            throw new Exception('An error occurred when saving the model: ' . print_r($this->getErrors(), true));
+        }
+
+        return self::STATUS_CHANGE_CODE_OK;
+    }
+
+    /**
+     * Changes the external_trial_identifier of a TrialPatient record
+     *
+     * @param string $new_external_id The new external reference
+     * @throws CHttpException Thrown if an error occurs when saving the model or if it cannot be found
+     */
+    public function updateExternalId($new_external_id)
+    {
+        $this->external_trial_identifier = $new_external_id;
+
+        if (!$this->save()) {
+            throw new CHttpException('An error occurred when saving the model: ' . print_r($this->getErrors(), true));
+        }
+    }
+
+    /**
+     * Updates the treatment type of a trial-patient with a new treatment type
+     *
+     * @param int $treatment_type The new treatment type
+     * @throws Exception Thrown if an error occurs when saving the TrialPatient
+     */
+    public function updateTreatmentType($treatment_type)
+    {
+        if ((int)$this->trial->status !== Trial::STATUS_CLOSED) {
+            throw new Exception('You cannot change the treatment type until the trial is closed.');
+        }
+
+        $this->treatment_type = $treatment_type;
+
+        if (!$this->save()) {
+            throw new Exception('An error occurred when saving the model: ' . print_r($this->getErrors(), true));
+        }
     }
 }

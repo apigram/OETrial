@@ -183,9 +183,9 @@ Yii::app()->getClientScript()->registerScriptFile($assetPath . '/js/toggle-secti
       data: {id: trial_patient_id, new_status: new_status},
       type: 'GET',
       success: function (response) {
-        if (response === '<?php echo TrialPatientController::STATUS_CHANGE_CODE_OK; ?>') {
+        if (response === '<?php echo TrialPatient::STATUS_CHANGE_CODE_OK; ?>') {
           window.location.reload(false);
-        } else if (response === '<?php echo TrialPatientController::STATUS_CHANGE_CODE_ALREADY_IN_INTERVENTION; ?>') {
+        } else if (response === '<?php echo TrialPatient::STATUS_CHANGE_CODE_ALREADY_IN_INTERVENTION; ?>') {
           new OpenEyes.UI.Dialog.Alert({
             content: "You can't accept this patient into your Trial because the patient has already been accepted into another Intervention trial."
           }).open();
@@ -281,9 +281,9 @@ Yii::app()->getClientScript()->registerScriptFile($assetPath . '/js/toggle-secti
       data: {id: trial_id, new_state: new_state},
       type: 'GET',
       success: function (response) {
-        if (response === '<?php echo TrialController::RETURN_CODE_OK; ?>') {
+        if (response === '<?php echo Trial::RETURN_CODE_OK; ?>') {
           location.reload();
-        } else if (response === '<?php echo TrialController::RETURN_CODE_CANT_OPEN_SHORTLISTED_TRIAL; ?>') {
+        } else if (response === '<?php echo Trial::RETURN_CODE_CANT_OPEN_SHORTLISTED_TRIAL; ?>') {
           new OpenEyes.UI.Dialog.Alert({
             content: "You can't start the trial while some patients are still shortlisted. Either accept or reject them into the Trial before continuing.."
           }).open();

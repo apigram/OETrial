@@ -6,15 +6,6 @@
 class TrialPatientController extends BaseModuleController
 {
     /**
-     * The return value for a actionChangeStatus() if the status change is successful
-     */
-    const STATUS_CHANGE_CODE_OK = 'success';
-    /**
-     * The return code for actionChangeStatus() if the patient is already in another intervention trial
-     */
-    const STATUS_CHANGE_CODE_ALREADY_IN_INTERVENTION = 'already_in_intervention';
-
-    /**
      * @return array action filters
      */
     public function filters()
@@ -78,30 +69,14 @@ class TrialPatientController extends BaseModuleController
      * Changes the status of a patient in a trial to a given value
      * @param int $id The id of the TrialPatient to change the status for
      * @param int $new_status The new status of the TrialPatient
-     * @throws CHttpException Thrown the model cannot be saved
+     * @throws Exception Thrown the model cannot be saved
      */
     public function actionChangeStatus($id, $new_status)
     {
-        $model = $this->loadModel($id);
-
-        if ((int)$new_status === TrialPatient::STATUS_ACCEPTED &&
-            (int)$model->trial->trial_type === Trial::TRIAL_TYPE_INTERVENTION &&
-            $model->patient->isCurrentlyInInterventionTrial()
-        ) {
-            echo self::STATUS_CHANGE_CODE_ALREADY_IN_INTERVENTION;
-
-            return;
-        }
-
-        $model->patient_status = $new_status;
-        if (!$model->save()) {
-            throw new CHttpException(400,
-                'An error occurred when saving the model: ' . print_r($model->getErrors(), true));
-        }
-
-        echo self::STATUS_CHANGE_CODE_OK;
+        $trialPatient = $this->loadModel($id);
+        $result = $trialPatient->changeStatus($new_status);
+        echo $result;
     }
-
 
     /**
      * Changes the external_trial_identifier of a TrialPatient record
@@ -113,12 +88,7 @@ class TrialPatientController extends BaseModuleController
     public function actionUpdateExternalId($id, $new_external_id)
     {
         $model = $this->loadModel($id);
-        $model->external_trial_identifier = $new_external_id;
-
-        if (!$model->save()) {
-            throw new CHttpException(400,
-                'An error occurred when saving the model: ' . print_r($model->getErrors(), true));
-        }
+        $model->updateExternalId($new_external_id);
     }
 
     /**
@@ -126,21 +96,11 @@ class TrialPatientController extends BaseModuleController
      *
      * @param int $id The ID of the TrialPatient model to update
      * @param int $treatment_type The new treatment type
-     * @throws CHttpException Thrown if an error occurs when saving the TrialPatient
+     * @throws Exception Thrown if an error occurs when saving the TrialPatient
      */
     public function actionUpdateTreatmentType($id, $treatment_type)
     {
         $model = $this->loadModel($id);
-
-        if ((int)$model->trial->status !== Trial::STATUS_CLOSED) {
-            throw new CHttpException(400, 'You cannot change the treatment type until the trial is closed.');
-        }
-
-        $model->treatment_type = $treatment_type;
-
-        if (!$model->save()) {
-            throw new CHttpException(400,
-                'An error occurred when saving the model: ' . print_r($model->getErrors(), true));
-        }
+        $model->updateTreatmentType($treatment_type);
     }
 }

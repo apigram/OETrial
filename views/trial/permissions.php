@@ -188,7 +188,7 @@ $canManageTrial = Trial::checkTrialAccess(Yii::app()->user, $model->id, UserTria
             role: $('#user_role').val()
           },
           'success': function (html) {
-            if (html === '<?php echo TrialController::RETURN_CODE_USER_PERMISSION_ALREADY_EXISTS; ?>') {
+            if (html === '<?php echo Trial::RETURN_CODE_USER_PERMISSION_ALREADY_EXISTS; ?>') {
               new OpenEyes.UI.Dialog.Alert({
                 content: "That patient has already been shared to this trial. To change their permissions, please remove them first and try again."
               }).open();
@@ -232,16 +232,16 @@ $canManageTrial = Trial::checkTrialAccess(Yii::app()->user, $model->id, UserTria
         'url': baseUrl + '<?php echo Yii::app()->controller->createUrl('/OETrial/trial/removePermission',
             array('id' => $model->id)); ?>' + '?permission_id=' + permission_id,
         'success': function (result) {
-          if (result === '<?php echo TrialController::REMOVE_PERMISSION_RESULT_SUCCESS; ?>') {
+          if (result === '<?php echo Trial::REMOVE_PERMISSION_RESULT_SUCCESS; ?>') {
             var row = $('#currentPermissions tr[data-permission-id="' + permission_id + '"]');
             row.hide('slow', function () {
               row.remove();
             });
-          } else if (result === '<?php echo TrialController::REMOVE_PERMISSION_RESULT_CANT_REMOVE_SELF; ?>') {
+          } else if (result === '<?php echo Trial::REMOVE_PERMISSION_RESULT_CANT_REMOVE_SELF; ?>') {
             new OpenEyes.UI.Dialog.Alert({
               content: "You can't remove yourself from this Trial.\n\nYou will have to get another user with Manage privileges to remove you."
             }).open();
-          } else if (result === '<?php echo TrialController::REMOVE_PERMISSION_RESULT_CANT_REMOVE_LAST; ?>') {
+          } else if (result === '<?php echo Trial::REMOVE_PERMISSION_RESULT_CANT_REMOVE_LAST; ?>') {
             new OpenEyes.UI.Dialog.Alert({
               content: "You can't remove the last user from the Trial.\n\nThere must always be at least one person assigned to a Trial."
             }).open();
