@@ -246,9 +246,19 @@ Yii::app()->getClientScript()->registerScriptFile($assetPath . '/js/toggle-secti
     });
   }
 
-  function updateTreatmentType(treatment_type_picker) {
-    var trial_patient_id = $(treatment_type_picker).attr('data-trial-patient-id');
-    var treatment_type = $(treatment_type_picker).val();
+  function onTreatmentTypeChange(trial_patient_id) {
+    $('#treatment-type-actions-' + trial_patient_id).show();
+  }
+
+  function cancelTreatmentType(trial_patient_id) {
+    var oldTreatmentType = $('#treatment-type-hidden-' + trial_patient_id).val();
+    $('#treatment-type-' + trial_patient_id).val(oldTreatmentType);
+    $('#treatment-type-actions-' + trial_patient_id).hide();
+  }
+
+  function updateTreatmentType(trial_patient_id) {
+
+    var treatment_type = $('#treatment-type-' + trial_patient_id).val();
 
     $('#treatment-type-loader-' + trial_patient_id).show();
     $('#treatment-type-success-' + trial_patient_id).hide();
@@ -260,6 +270,8 @@ Yii::app()->getClientScript()->registerScriptFile($assetPath . '/js/toggle-secti
       success: function (response) {
         $('#treatment-type-loader-' + trial_patient_id).hide();
         $('#treatment-type-success-' + trial_patient_id).show();
+        $('#treatment-type-hidden-' + trial_patient_id).val(treatment_type);
+        $('#treatment-type-actions-' + trial_patient_id).hide();
       },
       error: function (response) {
         new OpenEyes.UI.Dialog.Alert({

@@ -70,28 +70,31 @@ if ($isInAnotherInterventionTrial) {
   </td>
     <?php if ((int)$data->trial->trial_type === Trial::TRIAL_TYPE_INTERVENTION): ?>
       <td> <!-- Treatment Type -->
-          <?php if ((int)$data->trial->status === Trial::STATUS_CLOSED): ?>
-
-              <?php if ($canEditPatient): ?>
-                  <?php echo CHtml::dropDownList(
-                      'treatment-type',
-                      $data->treatment_type,
-                      TrialPatient::getTreatmentTypeOptions(),
-                      array(
-                          'id' => "treatment-type-$data->id",
-                          'data-trial-patient-id' => $data->id,
-                          'onchange' => 'updateTreatmentType(this)',
-                      )
-                  ); ?>
+          <?php if ($canEditPatient && (int)$data->trial->status === Trial::STATUS_CLOSED): ?>
+              <?php echo CHtml::dropDownList(
+                  'treatment-type',
+                  $data->treatment_type,
+                  TrialPatient::getTreatmentTypeOptions(),
+                  array(
+                      'id' => "treatment-type-$data->id",
+                      'data-trial-patient-id' => $data->id,
+                      'onchange' => "onTreatmentTypeChange($data->id)",
+                  )
+              ); ?>
+              <?php echo CHtml::hiddenField("treatment-type-hidden-$data->id", $data->treatment_type); ?>
+            <div id="treatment-type-actions-<?php echo $data->id; ?>" style="display: none">
+              <a href="javascript:void(0)" onclick="updateTreatmentType(<?php echo $data->id; ?>)">Save</a>
+              <a href="javascript:void(0)" onclick="cancelTreatmentType(<?php echo $data->id; ?>)">Cancel</a>
               <img id="treatment-type-loader-<?php echo $data->id; ?>"
                    src="<?php echo Yii::app()->assetManager->createUrl('img/ajax-loader.gif') ?>" alt="Working..."
                    class="hidden"/>
               <img id="treatment-type-success-<?php echo $data->id; ?>"
                    src="<?php echo Yii::app()->assetManager->createUrl('img/_elements/icons/event-optional/element-added.png'); ?>"
                    alt="Success" class="hidden"/>
-              <?php else: /* can't edit */ ?>
-                  <?php echo $data->getTreatmentTypeForDisplay(); ?>
-              <?php endif; ?>
+            </div>
+
+          <?php else: /* can't edit */ ?>
+              <?php echo $data->getTreatmentTypeForDisplay(); ?>
           <?php endif; ?>
       </td>
     <?php endif; ?>
