@@ -263,6 +263,8 @@ class TrialPatient extends BaseActiveRecordVersioned
             throw new Exception('An error occurred when saving the model: ' . print_r($this->getErrors(), true));
         }
 
+        $this->audit('trial-patient', 'change-status');
+
         return self::STATUS_CHANGE_CODE_OK;
     }
 
@@ -270,15 +272,17 @@ class TrialPatient extends BaseActiveRecordVersioned
      * Changes the external_trial_identifier of a TrialPatient record
      *
      * @param string $new_external_id The new external reference
-     * @throws CHttpException Thrown if an error occurs when saving the model or if it cannot be found
+     * @throws Exception Thrown if an error occurs when saving the model or if it cannot be found
      */
     public function updateExternalId($new_external_id)
     {
         $this->external_trial_identifier = $new_external_id;
 
         if (!$this->save()) {
-            throw new CHttpException('An error occurred when saving the model: ' . print_r($this->getErrors(), true));
+            throw new Exception('An error occurred when saving the model: ' . print_r($this->getErrors(), true));
         }
+
+        $this->audit('trial-patient', 'update-external-id');
     }
 
     /**
@@ -298,5 +302,7 @@ class TrialPatient extends BaseActiveRecordVersioned
         if (!$this->save()) {
             throw new Exception('An error occurred when saving the model: ' . print_r($this->getErrors(), true));
         }
+
+        $this->audit('trial-patient', 'update-treatment-type');
     }
 }

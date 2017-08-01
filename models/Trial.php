@@ -287,6 +287,8 @@ class Trial extends BaseActiveRecordVersioned
             $newPermission->user_id = Yii::app()->user->id;
             $newPermission->trial_id = $this->id;
             $newPermission->permission = UserTrialPermission::PERMISSION_MANAGE;
+            $newPermission->role = 'Trial Owner';
+
             if (!$newPermission->save()) {
                 throw new CHttpException(500, 'The owner permission for the new trial could not be saved: '
                     . print_r($newPermission->getErrors(), true));
@@ -431,7 +433,7 @@ class Trial extends BaseActiveRecordVersioned
     /**
      * Adds a patient to the trial
      *
-     * @param Patient $patient THe patient to add
+     * @param Patient $patient The patient to add
      * @param int $patient_status The initial trial status for the patient (default to shortlisted)
      * @throws Exception Thrown if an error occurs when saving the TrialPatient record
      */
@@ -447,6 +449,8 @@ class Trial extends BaseActiveRecordVersioned
             throw new Exception(
                 'Unable to create TrialPatient: ' . print_r($trialPatient->getErrors(), true));
         }
+
+        $this->audit('trial', 'add-patient');
     }
 
     /**
@@ -470,6 +474,8 @@ class Trial extends BaseActiveRecordVersioned
         if (!$trialPatient->delete()) {
             throw new Exception('Unable to delete TrialPatient: ' . print_r($trialPatient->getErrors(), true));
         }
+
+        $this->audot('trial', 'remove-patient');
     }
 
     /**
@@ -503,6 +509,8 @@ class Trial extends BaseActiveRecordVersioned
             throw new Exception('Unable to create UserTrialPermission: ' . print_r($userPermission->getErrors(), true));
         }
 
+        $this->audit('trial', 'add-user-permission');
+
         return self::RETURN_CODE_USER_PERMISSION_OK;
     }
 
@@ -526,7 +534,7 @@ class Trial extends BaseActiveRecordVersioned
             return self::REMOVE_PERMISSION_RESULT_CANT_REMOVE_SELF;
         }
 
-        // THe last Manage permission in a trial can't be removed (there always has to be one manager for a trial)
+        // The last Manage permission in a trial can't be removed (there always has to be one manager for a trial)
         if ((int)$permission->permission === UserTrialPermission::PERMISSION_MANAGE) {
             $managerCount = UserTrialPermission::model()->count('trial_id = :trialId AND permission = :permission',
                 array(
@@ -545,6 +553,8 @@ class Trial extends BaseActiveRecordVersioned
                 . print_r($permission->getErrors(), true));
         }
 
+        $this->audit('trial', 'remove-user-permission');
+
         return self::REMOVE_PERMISSION_RESULT_SUCCESS;
     }
 
@@ -554,7 +564,7 @@ class Trial extends BaseActiveRecordVersioned
      *
      * @param int $new_state The new state to transition to (must be a valid state within Trial::getAllowedStatusRange()
      * @return string The return  code
-     * @throws CHttpException Thrown if an error occurs when saving
+     * @throws Exception Thrown if an error occurs when saving
      */
     public function transitionState($new_state)
     {
@@ -574,8 +584,11 @@ class Trial extends BaseActiveRecordVersioned
 
         $this->status = $new_state;
         if (!$this->save()) {
-            throw new Exception('An error occurred when attempting to change the status: ' . print_r($this->getErrors(), true));
+            throw new Exception('An error occurred when attempting to change the status: ' . print_r($this->getErrors(),
+                    true));
         }
+
+        $this->audit('trial', 'transition-state');
 
         return self::RETURN_CODE_OK;
     }

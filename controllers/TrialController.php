@@ -265,7 +265,7 @@ class TrialController extends BaseModuleController
      * Adds a patient to the trial
      *
      * @param int $id The ID of the Trial to add to
-     * @param int $patient_id THe ID of the patient to add
+     * @param int $patient_id The ID of the patient to add
      * @param int $patient_status The initial trial status for the patient (default to shortlisted)
      * @throws Exception Thrown if an error occurs when saving the TrialPatient record
      */
@@ -342,9 +342,9 @@ class TrialController extends BaseModuleController
      */
     public function actionTransitionState($id, $new_state)
     {
-       $trial = $this->loadModel($id);
-       $result = $trial->transitionState($new_state);
-       echo $result;
+        $trial = $this->loadModel($id);
+        $result = $trial->transitionState($new_state);
+        echo $result;
     }
 
     /**
