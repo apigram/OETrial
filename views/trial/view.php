@@ -194,13 +194,11 @@ Yii::app()->getClientScript()->registerScriptFile($assetPath . '/js/toggle-secti
         }
       },
       error: function (response) {
+        $('#action-loader-' + trial_patient_id).hide();
         new OpenEyes.UI.Dialog.Alert({
           content: "Sorry, an internal error occurred and we were unable to change the patient status.\n\nPlease contact support for assistance."
         }).open();
       },
-      complete: function (response) {
-        $('#action-loader-' + trial_patient_id).hide();
-      }
     });
   }
 

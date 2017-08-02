@@ -63,8 +63,8 @@ if ($isInAnotherInterventionTrial) {
           <a href="javascript:void(0)" onclick="saveExternalTrialIdentifier(<?php echo $data->id; ?>)">Save</a>
           <a href="javascript:void(0)" onclick="cancelExternalTrialIdentifier(<?php echo $data->id; ?>)">Cancel</a>
           <img id="ext-trial-id-loader-<?php echo $data->id; ?>" class="loader"
-              src="<?php echo Yii::app()->assetManager->createUrl('img/ajax-loader.gif') ?>"
-              alt="loading..." style="display: none;"/>
+               src="<?php echo Yii::app()->assetManager->createUrl('img/ajax-loader.gif') ?>"
+               alt="loading..." style="display: none;"/>
         </div>
 
 
@@ -119,32 +119,40 @@ if ($isInAnotherInterventionTrial) {
 
           <?php if ((int)$data->patient_status === TrialPatient::STATUS_SHORTLISTED): ?>
 
-          <a href="javascript:void(0)"
-             onclick="changePatientStatus(this, <?php echo $data->id; ?>, <?php echo TrialPatient::STATUS_ACCEPTED; ?>)"
-             class="accept-patient-link"
-             <?php if ($isInAnotherInterventionTrial): ?>style="color: #ad1515;"<?php endif; ?> >Accept
-          </a>
+          <div>
+            <a href="javascript:void(0)"
+               onclick="changePatientStatus(this, <?php echo $data->id; ?>, <?php echo TrialPatient::STATUS_ACCEPTED; ?>)"
+               class="accept-patient-link"
+               <?php if ($isInAnotherInterventionTrial): ?>style="color: #ad1515;"<?php endif; ?> >Accept
+            </a>
+          </div>
           <?php endif; ?>
 
           <?php if ((int)$data->patient_status === TrialPatient::STATUS_SHORTLISTED || (int)$data->patient_status === TrialPatient::STATUS_ACCEPTED): ?>
-          <a href="javascript:void(0)"
-             onclick="changePatientStatus(this, <?php echo $data->id; ?>, <?php echo TrialPatient::STATUS_REJECTED; ?>)"
-             class="accept-patient-link">Reject
-          </a>
+          <div>
+            <a href="javascript:void(0)"
+               onclick="changePatientStatus(this, <?php echo $data->id; ?>, <?php echo TrialPatient::STATUS_REJECTED; ?>)"
+               class="accept-patient-link">Reject
+            </a>
+          </div>
           <?php endif; ?>
 
           <?php if ((int)$data->patient_status === TrialPatient::STATUS_REJECTED): ?>
-          <span style="white-space: nowrap;">
+          <div style="white-space: nowrap;">
+          <span>
             <a href="javascript:void(0)"
                onclick="changePatientStatus(this, <?php echo $data->id; ?>, <?php echo TrialPatient::STATUS_SHORTLISTED; ?>)"
                class="accept-patient-link">Re-Shortlist
             </a>
           </span>
 
-          <a href="javascript:void(0)"
-             onclick="removePatientFromTrial(<?php echo $data->id; ?>, <?php echo $data->patient_id; ?>, <?php echo $data->trial_id; ?>)">
-            Remove
-          </a>
+          </div>
+          <div>
+            <a href="javascript:void(0)"
+               onclick="removePatientFromTrial(<?php echo $data->id; ?>, <?php echo $data->patient_id; ?>, <?php echo $data->trial_id; ?>)">
+              Remove
+            </a>
+          </div>
           <?php endif; ?>
 
         <img class="loader" id="action-loader-<?php echo $data->id; ?>"
