@@ -386,7 +386,15 @@ class TrialController extends BaseModuleController
         $criteria->compare('LOWER(last_name)', $term, true, 'OR');
 
         $criteria->addCondition('id NOT IN (SELECT user_id FROM user_trial_permission WHERE trial_id = ' . $model->id . ')');
-        $criteria->addCondition("EXISTS( SELECT * FROM authassignment WHERE userid = id AND itemname = 'View Trial')");
+        $criteria->addCondition('
+            EXISTS(
+                SELECT 1
+                FROM authassignment aa
+                JOIN authitemchild aic
+                ON aic.parent = aa.itemname
+                WHERE aa.userid = id 
+                AND aic.child = \'TaskViewTrial\'
+            )');
 
         $words = explode(' ', $term);
         if (count($words) > 1) {
