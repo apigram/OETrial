@@ -435,6 +435,7 @@ class Trial extends BaseActiveRecordVersioned
      *
      * @param Patient $patient The patient to add
      * @param int $patient_status The initial trial status for the patient (default to shortlisted)
+     * @returns TrialPatient The new TrialPatient record
      * @throws Exception Thrown if an error occurs when saving the TrialPatient record
      */
     public function addPatient(Patient $patient, $patient_status)
@@ -451,6 +452,8 @@ class Trial extends BaseActiveRecordVersioned
         }
 
         $this->audit('trial', 'add-patient');
+
+        return $trialPatient;
     }
 
     /**
@@ -475,7 +478,7 @@ class Trial extends BaseActiveRecordVersioned
             throw new Exception('Unable to delete TrialPatient: ' . print_r($trialPatient->getErrors(), true));
         }
 
-        $this->audot('trial', 'remove-patient');
+        $this->audit('trial', 'remove-patient');
     }
 
     /**

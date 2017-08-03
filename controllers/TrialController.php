@@ -274,7 +274,7 @@ class TrialController extends BaseModuleController
         $trial = $this->loadModel($id);
         /* @var Patient $patient */
         $patient = Patient::model()->findByPk($patient_id);
-        $trial->addPatient($patient, $patient_status);
+        $trialPatient = $trial->addPatient($patient, $patient_status);
     }
 
     /**

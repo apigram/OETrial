@@ -293,6 +293,10 @@ class TrialPatient extends BaseActiveRecordVersioned
      */
     public function updateTreatmentType($treatment_type)
     {
+        if (!(int)in_array($treatment_type, TrialPatient::getAllowedTreatmentTypeRange())) {
+            throw new Exception('Invalid treatment type: ' . $treatment_type);
+        }
+
         if ((int)$this->trial->status !== Trial::STATUS_CLOSED) {
             throw new Exception('You cannot change the treatment type until the trial is closed.');
         }

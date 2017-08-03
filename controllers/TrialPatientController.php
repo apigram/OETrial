@@ -83,7 +83,7 @@ class TrialPatientController extends BaseModuleController
      *
      * @param int $id The ID of the TrialPatient record
      * @param string $new_external_id The new external reference
-     * @throws CHttpException Thrown if an error occurs when saving the model or if it cannot be found
+     * @throws Exception Thrown if an error occurs when saving the model or if it cannot be found
      */
     public function actionUpdateExternalId($id, $new_external_id)
     {

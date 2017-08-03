@@ -7,6 +7,7 @@ return array(
         'description' => 'Trial Description',
         'owner_user_id' => $this->getRecord('user', 'user1')->id,
         'status' => Trial::STATUS_OPEN,
+        'trial_type' => Trial::TRIAL_TYPE_INTERVENTION,
     ),
     'trial2' => array(
         'id' => 2,
@@ -14,6 +15,7 @@ return array(
         'description' => 'Trial Description',
         'owner_user_id' => $this->getRecord('user', 'user1')->id,
         'status' => Trial::STATUS_OPEN,
+        'trial_type' => Trial::TRIAL_TYPE_INTERVENTION,
     ),
     'trial3' => array(
         'id' => 3,
@@ -21,5 +23,6 @@ return array(
         'description' => 'Trial Description',
         'owner_user_id' => $this->getRecord('user', 'user1')->id,
         'status' => Trial::STATUS_CLOSED,
+        'trial_type' => Trial::TRIAL_TYPE_INTERVENTION,
     ),
 );

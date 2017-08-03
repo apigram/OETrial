@@ -192,8 +192,12 @@ $canManageTrial = Trial::checkTrialAccess(Yii::app()->user, $model->id, UserTria
               new OpenEyes.UI.Dialog.Alert({
                 content: "That patient has already been shared to this trial. To change their permissions, please remove them first and try again."
               }).open();
-            } else {
+            } else if(html === '<?php echo Trial::RETURN_CODE_USER_PERMISSION_OK; ?>') {
               location.reload();
+            } else {
+              new OpenEyes.UI.Dialog.Alert({
+                content: "An unknown response code was returned by the system: " + html + "\n\nPlease contact support for assistance."
+              }).open();
             }
           }
           ,

@@ -20,6 +20,11 @@ class TrialTest extends CDbTestCase
         parent::setUp();
     }
 
+    public function tearDown()
+    {
+        parent::tearDown();
+    }
+
     public function testTitle()
     {
         $trial = new Trial();
@@ -210,8 +215,136 @@ class TrialTest extends CDbTestCase
         $this->assertEquals(UserTrialPermission::PERMISSION_EDIT, $trial->getTrialAccess($this->user('user3')));
     }
 
-    public function tearDown()
+    public function testAddPatient()
     {
-        parent::tearDown();
+        /* @var Trial $trial */
+        $trial = $this->trial('trial1');
+        $patient = $this->patient('patient2');
+        $trialPatient = $trial->addPatient($patient, TrialPatient::STATUS_SHORTLISTED);
+
+        $this->assertNotNull($trialPatient, 'The patient should have been added to the trial');
+        $this->assertEquals(TrialPatient::STATUS_SHORTLISTED, $trialPatient->patient_status,
+            'The patietn status should be shortlisted');
+        $this->assertEquals($trial->id, $trialPatient->trial->id, 'The trial id should match the patient trial id');
+        $this->assertEquals(TrialPatient::TREATMENT_TYPE_UNKNOWN, $trialPatient->treatment_type,
+            'The patient treatment type should start at unknown');
+    }
+
+    public function testRemovePatient()
+    {
+        /* @var TrialPatient $trialPatient */
+        $trialPatient = $this->trial_patient('trial_patient_1');
+
+        /* @var Trial $trial */
+        $trial = $this->trial('trial1');
+        $patient = $this->patient('patient1');
+
+        $this->assertNotNull(TrialPatient::model()->find('trial_id = :trialId AND patient_id = :patientId',
+            array(
+                ':trialId' => $trial->id,
+                ':patientId' => $patient->id,
+            )
+        ), 'The patient should have started in the trial');
+
+        $trial->removePatient($trialPatient->patient_id);
+
+        $this->assertNull(TrialPatient::model()->find('trial_id = :trialId AND patient_id = :patientId',
+            array(
+                ':trialId' => $trial->id,
+                ':patientId' => $patient->id,
+            )
+        ), 'The patient should no longer be in the trial');
+    }
+
+    public function testAddUserPermission()
+    {
+        /* @var Trial $trial2 */
+        $trial2 = $this->trial('trial2');
+        /* @var User $user2 */
+        $user2 = $this->user('user2');
+
+        $result = $trial2->addUserPermission($user2->id, UserTrialPermission::PERMISSION_VIEW, null);
+        $this->assertEquals(Trial::RETURN_CODE_USER_PERMISSION_OK, $result,
+            'The permission should have been added successfully');
+    }
+
+    public function testAddUserPermissionClash()
+    {
+        /* @var Trial $trial */
+        $trial = $this->trial('trial1');
+        $user1 = $this->user('user1');
+
+        $result = $trial->addUserPermission($user1->id, UserTrialPermission::PERMISSION_VIEW, null);
+        $this->assertEquals(Trial::RETURN_CODE_USER_PERMISSION_ALREADY_EXISTS, $result,
+            'The permission already exists, and a duplicate should have been prevented');
+    }
+
+    public function testRemoveUserPermission()
+    {
+        /* @var Trial $trial */
+        $trial = $this->trial('trial1');
+        /* @var UserTrialPermission $userPermission */
+        $userPermission = $this->user_trial_permission('user_trial_permission_2');
+
+        $this->assertEquals(Trial::REMOVE_PERMISSION_RESULT_SUCCESS, $trial->removeUserPermission($userPermission->id),
+            'The permission should have been removed successfully');
+    }
+
+    public function testRemoveLastUserPermission()
+    {
+        /* @var Trial $trial */
+        $trial = $this->trial('trial1');
+        /* @var UserTrialPermission $userPermission */
+        $userPermission = $this->user_trial_permission('user_trial_permission_1');
+
+        $this->assertEquals(Trial::REMOVE_PERMISSION_RESULT_CANT_REMOVE_LAST,
+            $trial->removeUserPermission($userPermission->id), 'The last manager should not have been removable');
+    }
+
+    public function testTransitionStateShortlist()
+    {
+        /* @var Trial $trial */
+        $trial = $this->trial('trial2');
+
+        $this->assertEquals(Trial::STATUS_OPEN, $trial->status, 'The trial should have been open');
+        $result = $trial->transitionState(Trial::STATUS_IN_PROGRESS);
+        $this->assertEquals(Trial::RETURN_CODE_OK, $result,
+            'The trial should have move to the in progress state');
+    }
+
+    public function testTransitionStateShortlistBlock()
+    {
+        /* @var Trial $trial */
+        $trial = $this->trial('trial1');
+
+        $this->assertEquals(Trial::STATUS_OPEN, $trial->status, 'The trial should have been open');
+        $this->assertTrue($trial->hasShortlistedPatients(), 'The trial should have had shortlisted patients');
+        $result = $trial->transitionState(Trial::STATUS_IN_PROGRESS);
+        $this->assertEquals(Trial::RETURN_CODE_CANT_OPEN_SHORTLISTED_TRIAL, $result,
+            'The trial should have been prevented from being started while it still has shortlisted patients');
+    }
+
+    public function testTransitionStateStartedDate()
+    {
+        /* @var Trial $trial */
+        $trial = $this->trial('trial2');
+
+        $this->assertEquals(Trial::STATUS_OPEN, $trial->status, 'The trial should have been open');
+        $this->assertNull($trial->started_date, 'The started date should be null until the trial is started');
+
+        $result = $trial->transitionState(Trial::STATUS_IN_PROGRESS);
+        $this->assertNotNull($trial->started_date, 'The started date should be set when the trial is started');
+    }
+
+    public function testTransitionStateClosedDate()
+    {
+        /* @var Trial $trial */
+        $trial = $this->trial('trial2');
+
+        $trial->transitionState(Trial::STATUS_IN_PROGRESS);
+        $this->assertNull($trial->closed_date, 'The closed date should be null until the trial is closed');
+
+        $trial->transitionState(Trial::STATUS_CLOSED);
+        $this->assertNotNull($trial->closed_date, 'The closed date should be set when the trial is closed');
     }
 }
