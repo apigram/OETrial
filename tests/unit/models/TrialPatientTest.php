@@ -15,16 +15,6 @@ class TrialPatientTest extends CDbTestCase
         Yii::app()->getModule('OETrial');
     }
 
-    public function setUp()
-    {
-        parent::setUp();
-    }
-
-    public function tearDown()
-    {
-        parent::tearDown();
-    }
-
     public function testChangeStatus()
     {
         /* @var TrialPatient $trialPatient */
