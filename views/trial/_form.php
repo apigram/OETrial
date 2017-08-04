@@ -8,11 +8,7 @@
 
     <?php $form = $this->beginWidget('CActiveForm', array(
         'id' => 'trial-form',
-        // Please note: When you enable ajax validation, make sure the corresponding
-        // controller action is handling ajax validation correctly.
-        // There is a call to performAjaxValidation() commented in generated controller code.
-        // See class documentation of CActiveForm for details on this.
-        'enableAjaxValidation' => false,
+        'enableAjaxValidation' => true,
     )); ?>
 
   <p class="note text-right">Fields with <span class="required">*</span> are required.</p>
@@ -31,9 +27,10 @@
   <div class="row field-row">
     <div class="large-6 column">
       <div class="row field-row">
-          <?php echo $form->labelEx($model, 'external_reference'); ?>
-          <?php echo $form->textField($model, 'external_reference', array('size' => 100, 'maxlength' => 100)); ?>
-          <?php echo $form->error($model, 'external_reference'); ?>
+          <?php echo $form->labelEx($model, 'external_data_link'); ?>
+          <?php echo $form->urlField($model, 'external_data_link',
+              array('size' => 100, 'maxlength' => 255, 'onblur' => 'checkUrl(this)')); ?>
+          <?php echo $form->error($model, 'external_data_link'); ?>
       </div>
     </div>
   </div>
@@ -65,9 +62,21 @@
   </div>
 
   <div class="row buttons text-right">
-      <?php echo CHtml::submitButton($model->isNewRecord ? 'Create' : 'Save'); ?>
+      <?php echo CHtml::submitButton($model->getIsNewRecord() ? 'Create' : 'Save'); ?>
   </div>
 
     <?php $this->endWidget(); ?>
 
 </div><!-- form -->
+
+<script>
+  function checkUrl(urlField) {
+    var urlText = urlField.value;
+    if (urlText.indexOf("http") === -1) {
+      urlText = "http://" + urlText;
+    }
+
+    urlField.value = urlText;
+    return urlField;
+  }
+</script>

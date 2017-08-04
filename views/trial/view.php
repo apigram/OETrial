@@ -58,10 +58,14 @@ $hasManagePermissions = Trial::checkTrialAccess(Yii::app()->user, $model->id, Us
           </div>
         <?php endif; ?>
 
-        <?php if ($model->external_reference !== ''): ?>
+        <?php if ($model->external_data_link !== ''): ?>
           <div class="row">
             <div class="large-12 column">
-              <p><?php echo CHtml::encode($model->external_reference); ?></p>
+              <p>
+                  <?php echo $model->getAttributeLabel('external_data_link') ?>
+                  <?php echo CHtml::link(CHtml::encode($model->external_data_link),
+                      CHtml::encode($model->external_data_link), array('target' => '_blank')); ?>
+              </p>
             </div>
           </div>
         <?php endif; ?>
@@ -221,7 +225,7 @@ Yii::app()->getClientScript()->registerScriptFile($assetPath . '/js/toggle-secti
       url: '<?php echo Yii::app()->controller->createUrl('/OETrial/trialPatient/updateExternalId'); ?>',
       data: {id: trial_patient_id, new_external_id: external_id},
       type: 'GET',
-      complete: function(response) {
+      complete: function (response) {
         $('#ext-trial-id-loader-' + trial_patient_id).hide();
       },
       success: function (response) {
@@ -256,7 +260,7 @@ Yii::app()->getClientScript()->registerScriptFile($assetPath . '/js/toggle-secti
       url: '<?php echo Yii::app()->controller->createUrl('/OETrial/trialPatient/updateTreatmentType'); ?>',
       data: {id: trial_patient_id, treatment_type: treatment_type},
       type: 'GET',
-      complete: function(response) {
+      complete: function (response) {
         $('#treatment-type-loader-' + trial_patient_id).hide();
       },
       success: function (response) {

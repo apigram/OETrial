@@ -15,7 +15,7 @@ class m170521_234542_create_trial_table extends OEMigration
             'status' => 'int(10) unsigned NOT NULL',
             'started_date' => 'datetime',
             'closed_date' => 'datetime',
-            'external_reference' => 'varchar(100) collate utf8_bin',
+            'external_data_link' => 'varchar(255) collate utf8_bin',
         ), self::VERSIONED
         );
 

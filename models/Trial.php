@@ -12,11 +12,11 @@
  * @property int $trial_type
  * @property string $started_date
  * @property string $closed_date
+ * @property string $external_data_link
  * @property string $last_modified_date
  * @property string $last_modified_user_id
  * @property int $created_user_id
  * @property string $created_date
- * @property string $external_reference
  *
  * The followings are the available model relations:
  * @property User $ownerUser
@@ -107,7 +107,8 @@ class Trial extends BaseActiveRecordVersioned
         return array(
             array('name, owner_user_id, status', 'required'),
             array('name', 'length', 'max' => 64),
-            array('external_reference', 'length', 'max' => 100),
+            array('external_data_link', 'url', 'defaultScheme' => 'http'),
+            array('external_data_link', 'length', 'max' => 255),
             array('owner_user_id, last_modified_user_id, created_user_id, status', 'length', 'max' => 10),
             array('status', 'in', 'range' => self::getAllowedStatusRange()),
             array('trial_type', 'in', 'range' => self::getAllowedTrialTypeRange()),
@@ -256,7 +257,7 @@ class Trial extends BaseActiveRecordVersioned
             'last_modified_user_id' => 'Last Modified User',
             'created_user_id' => 'Created User',
             'created_date' => 'Created Date',
-            'external_reference' => 'External Reference',
+            'external_data_link' => 'External Data Link',
         );
     }
 

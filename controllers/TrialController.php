@@ -133,6 +133,8 @@ class TrialController extends BaseModuleController
         $model->trial_type = Trial::TRIAL_TYPE_NON_INTERVENTION;
         $model->owner_user_id = Yii::app()->user->id;
 
+        $this->performAjaxValidation($model);
+
         if (isset($_POST['Trial'])) {
             $model->attributes = $_POST['Trial'];
             if ($model->save()) {
