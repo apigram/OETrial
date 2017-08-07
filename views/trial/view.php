@@ -135,40 +135,7 @@ $hasManagePermissions = Trial::checkTrialAccess(Yii::app()->user, $model->id, Us
 
   </div><!-- /.large-9.column -->
 
-  <div class="large-3 column">
-    <div class="box generic">
-        <?php if ((int)$model->status !== Trial::STATUS_CANCELLED && $hasEditPermissions): ?>
-          <p>
-                <span class="highlight">
-                    <?php echo CHtml::link('Search for patients to add',
-                        Yii::app()->createUrl('/OECaseSearch/caseSearch', array('trial_id' => $model->id))); ?>
-                </span>
-          </p>
-        <?php endif; ?>
-
-        <?php if ($hasManagePermissions): ?>
-          <p>
-                <span class="highlight">
-                    <?php echo CHtml::link('Share this trial with other users',
-                        Yii::app()->createUrl('/OETrial/trial/permissions', array('id' => $model->id))); ?>
-                </span>
-          </p>
-        <?php endif; ?>
-
-        <?php echo CHtml::beginForm($this->createUrl('report/downloadReport')); ?>
-      <p>
-          <span class="highlight">
-              <?php echo CHtml::hiddenField('report-name', 'Cohort'); ?>
-              <?php echo CHtml::hiddenField('trialID', $model->id); ?>
-              <?php if (Yii::app()->user->checkAccess('OprnGenerateReport')): ?>
-                  <?php echo CHtml::linkButton('Download Report'); ?>
-              <?php endif; ?>
-          </span>
-      </p>
-        <?php echo CHtml::endForm(); ?>
-
-    </div>
-  </div>
+    <?php $this->renderPartial('_trialActions', array('trial' => $model)); ?>
 </div>
 
 <?php

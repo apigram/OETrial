@@ -272,3 +272,5 @@ $canManageTrial = Trial::checkTrialAccess(Yii::app()->user, $model->id, UserTria
 
   </script>
 <?php endif; ?>
+
+<?php $this->renderPartial('_trialActions', array('trial' => $model)); ?>
