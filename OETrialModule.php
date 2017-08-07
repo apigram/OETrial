@@ -13,7 +13,7 @@ class OETrialModule extends CWebModule
             'OETrial.components.*',
             'OETrial.controllers.*',
             'OECaseSearch.components.DBProviderInterface',
-            'OECaseSearch.models.CaseSearchParameter'
+            'OECaseSearch.components.CaseSearchParameter'
         ));
     }
 

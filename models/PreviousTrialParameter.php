@@ -269,4 +269,27 @@ WHERE $condition";
 
         return $binds;
     }
+
+    /**
+     * @inherit
+     */
+    public function getAuditData()
+    {
+        $types = Trial::getTrialTypeOptions();
+
+        $statusList = array(
+            TrialPatient::STATUS_SHORTLISTED => 'Shortlisted in',
+            TrialPatient::STATUS_ACCEPTED => 'Accepted in',
+            TrialPatient::STATUS_REJECTED => 'Rejected from',
+        );
+        $trials = Trial::getTrialList($this->type);
+        $treatmentTypeList = TrialPatient::getTreatmentTypeOptions();
+
+        $status = $this->status === null || $this->status === '' ? 'Included in' : $statusList[$this->status];
+        $type = $this->type === null || $this->type === '' ? 'Any Trial Type with' : $types[$this->type];
+        $trial = $this->trial === null || $this->trial === '' ? 'Any trial with' : $trials[$this->trial] . ' with ';
+        $treatment = $this->treatmentType === null || $this->treatmentType === '' ? 'Any Treatment' : $treatmentTypeList[$this->treatmentType];
+
+        return "$this->name: $this->operation $status $type $trial $treatment";
+    }
 }
